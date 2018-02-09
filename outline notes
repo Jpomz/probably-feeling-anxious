@@ -1,0 +1,40 @@
+General outline / notes
+
+Predicting link probabilities in food webs across AMD gradient. 
+
+Training data
+-Individual pred + prey from Woodward
+  - emailed to me, check gmail for date (I think it actually came from someone else)
+-Individual predator / mean prey body size from Warburton
+  - formulas are there, need to estimate dw
+-Species average pred/prey from Thompson
+
+AMD data
+- 25 sites across AMD gradient
+- Chemistry e.g. pH, metals
+- Habitat measures (probably not important...)
+- community composition / abundances
+- Biomass estimates (all individuals)
+
+1) "train" funciton
+- use training data sets to get a likelihood of link presence based on pred / prey biomass
+- "predict_niche_probability" function from Bartomeus
+  - Fxn expands trait matching (name?) package
+  - emailed to me while I was in OR (check gmail account, May or June???)
+
+2) Estimate link probability / strength in AMD streams
+- use probability as proxy of intxn strength?
+- modify probability with relative abundances?
+- multiple runs with binary links (based on probability above), and interaction strength based on biomass relationship?
+- Use Julia package and assess food webs with link probabilities?
+
+3a) stability?
+- Tang / Allesina (2012, 2014(?))
+- stability based on their metric
+
+3b) stability?
+- Dunne 2002
+- random species deletions
+- delete species based on size probability (bigger = higher probability)
+
+
