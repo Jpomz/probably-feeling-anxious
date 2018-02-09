@@ -8,6 +8,7 @@ Training data
 -Individual predator / mean prey body size from Warburton
   - formulas are there, need to estimate dw
 -Species average pred/prey from Thompson
+  - I think I also have biomass data + weighted food webs from his international / logging study. Could add these to trainng set if needed. (need to look them up / redownload from exchange account)
 
 AMD data
 - 25 sites across AMD gradient
