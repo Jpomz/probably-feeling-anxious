@@ -97,3 +97,10 @@ barplot(c(lh_model, lh_niche, lh_neutral),
 # AMD data ####
 inverts <- read_csv("data/raw data/AMD estimated invert dw g.csv")
 fish <- read_csv("data/raw data/estimated fish dw g.csv")
+
+lankey <- inverts %>%
+  filter(site == "Lankey") %>%
+  select(Label, dw) %>%
+  group_by(Label) %>%
+  summarize(mean(dw))
+  summarize()
