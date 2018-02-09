@@ -24,6 +24,10 @@ AMD data
   - emailed to me while I was in OR (check gmail account, May or June???)
 
 2) Estimate link probability / strength in AMD streams
+- use species averages? 
+  - need to do some data cleaning
+  - e.g. marry biomass estimates to community composotion data (e.g. surber samples)
+  - mean abundance, biomass, etc
 - use probability as proxy of intxn strength?
 - modify probability with relative abundances?
 - multiple runs with binary links (based on probability above), and interaction strength based on biomass relationship?
