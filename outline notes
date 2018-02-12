@@ -19,11 +19,21 @@ AMD data
 
 1) "train" funciton
 - use training data sets to get a likelihood of link presence based on pred / prey biomass
+  - which data to use? 
+  - look at how inferences / probability levels change based on combos of 3 data sets
+    - Woodward individual
+    - Warburton average
+    - Thompson average 
+    - looks like using all data is the best so far. Performs poorly for predicting fish prey. Need to revisit this
 - "predict_niche_probability" function from Bartomeus
   - Fxn expands trait matching (name?) package
   - emailed to me while I was in OR (check gmail account, May or June???)
 
 2) Estimate link probability / strength in AMD streams
+- link probability, Aij ~ J x N
+  - J = Niche, based on body size rules
+  - N = Neutral, product of relative abundances
+  - rescale Aij [0,1]
 - use species averages? 
   - need to do some data cleaning
   - e.g. marry biomass estimates to community composotion data (e.g. surber samples)
