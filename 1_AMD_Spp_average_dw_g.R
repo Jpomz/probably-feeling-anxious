@@ -32,6 +32,7 @@ dataset <- full.data %>%
   # calculate total and relative abundances per taxa
   group_by(site) %>%
   mutate(tot.ab = sum(density),
-         rel.ab = density / tot.ab) 
+         rel.ab = density / tot.ab) %>%
+  ungroup()
 
 saveRDS(dataset, "data/AMD fish invert dw abundance.RDS")
