@@ -46,10 +46,20 @@ AMD data
 3a) stability?
 - Tang / Allesina (2012, 2014(?))
 - stability based on their metric
+- need to calculate both "+" and "-" interactions, eigen values, etc
 
 3b) stability?
 - Dunne 2002
 - random species deletions
 - delete species based on size probability (bigger = higher probability)
 
+3c) stability with probabilistic networks?
+- run N bernouli trials using estimated probabilities. 
+- calculate food web measures (mean, sd) from bernouli trials
+- calculate stability for each trial, get a distribution of stability measures (e.g. Tang)
+  - interaction strengths based on allometric / metabolic scaling (in order to get both the + and - interaction strengths)
 
+3d) "inferred" stability
+- distribution of link strengths (viz a viz interaction probabilities)
+- many weak, few strong
+- other measures?

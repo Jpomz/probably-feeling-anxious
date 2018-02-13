@@ -20,7 +20,7 @@ plot_heat <- function(x, ...){
             scale = "none",
             trace = "none",
             dendrogram = "none",
-            breaks = seq(0,1,0.1),
+            breaks = seq(0,1,0.01),
             key = F,
             labRow = NA,
             labCol = NA,
@@ -29,11 +29,8 @@ plot_heat <- function(x, ...){
             ylab = "Resource")
 }
 
-# function to rescale [0,1]
-scale01 <- function(x){
-  (x-min(x))/(max(x)-min(x))
-}
-# function to rescale variable to [x,y]
+
+# function to rescale variable to [min, max]
 scalexy <- function(x, min, max){
   ((max - min) / (max(x) - min(x))) *
     (x - min(x)) + min
@@ -45,20 +42,27 @@ J <- readRDS("data/AMD link probability matrices.rds")
 # read in relative abundance matrices
 N <- readRDS("data/AMD relative abundance matrices.rds")
 
-# Aij ####
-Aij <- map2(J, N, ~.x*.y)
-map(Aij, plot_heat)
-# scale Aij [0,1]
-Aij.scale <- map(Aij, scale01)
-map(Aij.scale, plot_heat)
 # scale N first
-N.scale <- map(N, scale01)
-# aij with scaled N
-Aij.n.scale <- map2(J, N.scale, ~.x*.y)
-
 # scale N [0.5,1]
-N.scalexy <- map(N, scalexy, min = 0.5, max = 1)
-Aij.nxy <- map2(J, N.scalexy, ~.x*.y)
-map(Aij.nxy, plot_heat)
+N.scale <- map(N, scalexy, min = 0.6, max = 1)
+Aij <- map2(J, N.scale, ~.x*.y)
+map(Aij, plot_heat)
+map(Aij, hist)
 
-map(J, plot_heat)
+map(Aij, mean)
+
+b_trial <- function (prob_matr, trials){
+  prob <- as.vector(prob_matr)
+  out <- NULL
+  for (i in 1:trials){
+    out[[i]] <- matrix(rbinom(length(prob),
+                       1, prob = prob),
+                       ncol = ncol(prob_matr),
+                       nrow = nrow(prob_matr))
+  }
+  out
+}
+
+itali <- b_trial(Aij$Italia, 100)
+plot_heat(Aij$Italia)
+points(itali[[1]])
