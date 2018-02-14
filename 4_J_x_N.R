@@ -44,7 +44,7 @@ N <- readRDS("data/AMD relative abundance matrices.rds")
 
 # scale N first
 # scale N [0.5,1]
-N.scale <- map(N, scalexy, min = 0.6, max = 1)
+N.scale <- map(N, scalexy, min = 0.3, max = 1)
 Aij <- map2(J, N.scale, ~.x*.y)
 map(Aij, plot_heat)
 map(Aij, hist)
@@ -52,17 +52,25 @@ map(Aij, hist)
 map(Aij, mean)
 
 b_trial <- function (prob_matr, trials){
-  prob <- as.vector(prob_matr)
   out <- NULL
   for (i in 1:trials){
-    out[[i]] <- matrix(rbinom(length(prob),
-                       1, prob = prob),
+    out[[i]] <- matrix(rbinom(length(prob_matr),
+                       1, prob = prob_matr),
                        ncol = ncol(prob_matr),
                        nrow = nrow(prob_matr))
   }
   out
 }
 
-itali <- b_trial(Aij$Italia, 100)
-plot_heat(Aij$Italia)
-points(itali[[1]])
+# itali <- b_trial(Aij$Italia, 100)
+# plot_heat(Aij$Italia)
+# points(itali[[1]])
+
+b.trials <- map(Aij, b_trial, trials = 100)
+
+saveRDS(b.trials,
+        paste("data/100 bernouli trials ",
+              Sys.Date(),
+              ".rds",
+              sep = ""))
+
