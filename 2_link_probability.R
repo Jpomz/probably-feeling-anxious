@@ -147,9 +147,20 @@ link.probs <- llply(M, function (x){
 #             ylab = "Resource")
 # }
 
+# link.probs[[i]][[1]] == vector of link probabilities
+# pull out just that element
 prob.vec <- lapply(link.probs, "[[", 1)
+# convert vector to a matrix. Vector is organized by dw
+# as long as use the right ncol/nrow argument, matrix will be size sorted (e.g. typical predation matrix)
+# function to convert to matrix
 prob_matr <- function(vec){
   m = matrix(vec, sqrt(length(vec)), sqrt(length(vec)))
 }
+# convert all vectors to matrices
 prob.matr <- map(prob.vec, prob_matr)
+# add dimnames to matrices
+for(i in 1:length(prob.matr)){
+  dimnames(prob.matr[[i]]) <- list(dataset[[i]]$taxa,
+                                   dataset[[i]]$taxa)
+}
 saveRDS(prob.matr, "data/AMD link probability matrices.RDS")
