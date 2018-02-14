@@ -1,6 +1,7 @@
 # 4_J_x_N
 
 # estimate link probability by multiplying niche probability (J) and neutral probability (N)
+# also prune niche forbidden links
 # from Poisot et al 2014: 
 # Aij [proportional to] J(i,j) * N(i,j)
 # J = probability calculated by predict.niche.prob() from Bartomeus, in script #2_link_probability.R
@@ -36,17 +37,48 @@ scalexy <- function(x, min, max){
     (x - min(x)) + min
 }
 
+# function to set probabilities of forbidden taxa to 0
+rm_niche <- function(matrix, taxa){
+  for(name in (
+    colnames(matrix)[colnames(matrix) %in% taxa])){
+    matrix[,name] <- 0
+  }
+  matrix
+}
+# function to "set"fix" probabilities of fish predators
+fish_prob <- function(matrix, taxa){
+  for(name in (
+    colnames(matrix)[colnames(matrix) %in% taxa])){
+    matrix[,name] <- rnorm(nrow(matrix), 0.8, 0.01)
+  }
+  matrix
+}
+
 # data ####
 # read in link probabilities (J)
 J <- readRDS("data/AMD link probability matrices.rds")
 # read in relative abundance matrices
 N <- readRDS("data/AMD relative abundance matrices.rds")
 
+# prune niche forbidden links
+taxa.forbid <- c("Acari", "Austroclima", "Austrosimulium", "Blephariceridae", "Coloburiscus", "Copepoda", "Deleatidium", "Elmidae", "Elmidae Adult", "Eriopterini", "Helicopsyche", "Hexatomini", "Hydraenidae", "Hydrophilidae", "Nesameletus","Oligochaetae", "Olinga","Ostracoda", "Oxyethira", "Paraleptamphopus", "Platyhelminthes", "Potamopyrgus", "Rakiura", "Scirtidae", "Spaniocerca", "Spaniocercoides", "Zelandobius", "Zelolessica", "Zephlebia")
+J <- map(J,
+         rm_niche,
+         taxa = taxa.forbid)
+# fix fish probabilities runif(0.5, 1)
+J <- map(J,
+         fish_prob,
+         taxa = c("Salmo.trutta", "Anguilla.australis",
+                  "Galaxias.fasciatus", "Galaxias.maculatus",
+                  "Gobiomorphus.huttoni"))
+
 # scale N first
 # scale N [0.5,1]
-N.scale <- map(N, scalexy, min = 0.3, max = 1)
+N.scale <- map(N, scalexy, min = 0.5, max = 1)
+# link probability = J x N
 Aij <- map2(J, N.scale, ~.x*.y)
 map(Aij, plot_heat)
+
 map(Aij, hist)
 
 map(Aij, mean)
@@ -61,10 +93,6 @@ b_trial <- function (prob_matr, trials){
   }
   out
 }
-
-# itali <- b_trial(Aij$Italia, 100)
-# plot_heat(Aij$Italia)
-# points(itali[[1]])
 
 b.trials <- map(Aij, b_trial, trials = 100)
 
