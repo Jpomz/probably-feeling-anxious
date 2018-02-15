@@ -45,7 +45,7 @@ rm_niche <- function(matrix, taxa){
   }
   matrix
 }
-# function to "set"fix" probabilities of fish predators
+# function to "fix" probabilities of fish predators
 fish_prob <- function(matrix, taxa){
   for(name in (
     colnames(matrix)[colnames(matrix) %in% taxa])){
@@ -101,4 +101,7 @@ saveRDS(b.trials,
               Sys.Date(),
               ".rds",
               sep = ""))
+
+
+
 
