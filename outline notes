@@ -47,6 +47,7 @@ AMD data
 - Tang / Allesina (2012, 2014(?))
 - stability based on their metric
 - need to calculate both "+" and "-" interactions, eigen values, etc
+  - Something seems to be not working. interaction correlations are negative, and close to expected results (e.g. ~-0.7 to -0.8). However, E is supposed to be < 0, but my E are <<<<<< but >0. MAybe try and use empirical estimates of xistar? e.g. biomass * density?  
 
 3b) stability?
 - Dunne 2002
