@@ -36,72 +36,47 @@ xistar <- llply(dw, function (x){
   (x$avg.dw / 1000) * x$density
 })
 
-# # equilibrium biomass
-# # xistar = 10^(x0 + 3 * gamma + epsilon) * mi^(1 + gamma)
-# # mi = body mass in kg (avg.dw = g, so divide by 1000 to = kg)
-# xistar <- llply(dw, function (x){
-#   kg = x$avg.dw / 1000
-#   x0 = -1.16
-#   gamma = -0.675
-#   epsilon = rnorm(n = 1, mean = 0, sd = 0.1)
-#   result <- 10^(x0 + 3 * gamma + epsilon) * kg^(1 + gamma)
-#   return(result)
-# })
-
 # aij ####
-# search rate
-# aij = 10^a0 * mi^bi * f(kij)
-# a0 = -3.50
-# mi = body mass (kg m^-2) = x$kg.m2
-# f(kij) = function of kij
-# kij = mj / mi
-# f(kij) = kij^0.46 / (1 + kij^kappa)
-# kappa = 2
-# bi = N(-0.15, 0.0025); rnorm(1, -0.15, 0.0025)
-# bi = constant ####
-# setting bi to -0.15 for now!!!!!!!
+# function to calculate mass specific search rate
+# should resource and consumer be kg/m2 (e.g. xistar), or individual bodymass (e.g. dw$avg.dw)?
 
-# kij ####
-# kij = mj / mi
-# avg.dw = mg / 0.06 m^2
-# (avg.dw / 1000) * 16.66667 ==> kg / m^2
-# doesn't matter as long as use same for both mi and mj
-# e.g. mg, kg*m^-2, etc, since proportion all units cancel anyways
-kij <- map(dw, ~outer(X = .x$avg.dw, #.x$kg.m2,
-                      Y = .x$avg.dw, #.x$kg.m2,
-                      FUN = "/" ))
-# f(kij) = kij^0.46 / (1 + kij^kappa)
-f.kij <- map(kij, ~.x^0.46 / (1 + .x^2))
-
-# # aij
-# aij <- llply(kij, function (x){
-#   matrix(0, ncol = ncol(x), nrow = nrow(x))
-# })
-# for(web in 1:length(dw)){
-#   for(resource in 1:nrow(dw[[web]])){
-#     for(consumer in 1:nrow(dw[[web]])){
-#       #cons search rate for res
-#       aij[[web]][resource, consumer] = 
-#       10^-3.50 *
-#       xistar[[web]][consumer]^-0.15 * 
-#         # consumer body mass (kg*m^-2)
-#       f.kij[[web]][resource,consumer] # f(kij)
-#     }
-#   }
-# }
-
-get_aij <- function (resource, consumer){
-  aij = 10^-3.50 * consumer ^-0.15 *((resource / consumer)^0.46 / (1 + (resource / consumer)^2))
+get_aij <- function (resource, consumer,
+                     a0 = -3.50, bi = -0.15){
+  kij = resource / consumer
+  aij = 10^a0 * consumer^bi *
+    ((kij)^0.46 / (1 + (kij)^2))
   return(aij)
 }
+# get all xistar pairs
 xi.pairs <- map(xistar, ~expand.grid(.x, .x))
-aij <- map(xi.pairs, ~get_aij(resource = .x[,1], consumer = .x[,2]))
-aij <- map(aij, ~matrix(.x, nrow = sqrt(length(.x))))
+# calculate aij for all xistar pairs
+aij <- map(xi.pairs, 
+           ~get_aij(resource = .x[,1], 
+                    consumer = .x[,2]))
+# mak aij into matrices
+aij <- map(aij, 
+           ~matrix(.x, nrow = sqrt(length(.x))))
 
+# get all dw pairs
+dw.pairs.kg.m2 <- map(dw, ~expand.grid(.x$kg.m2,
+                                 .x$kg.m2))
+# calculate aij for all dw pairs
+aij.kg.m2 <- map(dw.pairs.kg.m2, 
+              ~get_aij(resource = .x[,1],
+                       consumer = .x[,2]))
+# make aij.dw into matrices
+aij.kg.m2 <- map(aij.kg.m2, ~matrix(.x,
+                    nrow = sqrt(length(.x))))
 
-dw.pairs <- map(dw, ~expand.grid(.x$avg.dw, .x$avg.dw))
-aij.dw <- map(dw.pairs, ~get_aij(resource = .x[,1], consumer = .x[,2]))
-aij.dw <- map(aij.dw, ~matrix(.x, nrow = sqrt(length(.x))))
+# avg.dw / 1000
+dw.pairs.1000 <- map(dw,
+                    ~expand.grid(.x$avg.dw / 1000,
+                                 .x$avg.dw / 1000))
+aij.dw.1000 <- map(dw.pairs.1000, 
+                 ~get_aij(resource = .x[,1],
+                          consumer = .x[,2]))
+aij.dw.1000 <- map(aij.dw.1000, ~matrix(.x,
+                                    nrow = sqrt(length(.x))))
 # eij ####
 # conversion efficiency, eij 
 # herbivore eij = runif(n, min = 0.1, max = 0.3)
@@ -112,34 +87,23 @@ eij.fun <- function (n=1){
 }
 
 # interaction strengths
-# mij = effect of prey resource on consumer
-# mij = eij * aij * xistar
-# mij[resource, consumer] = eij.fun * # conversion efficiency
-#   aij[resource, consumer] * # search rate 
-#   xistar[consumer]
-
-# mji = effect of consumer on resource
-# mji = -aij * xistar
-# mij[consumer, resource] = 
-#   -aij[resource, consumer] *
-#   xistar[resource]
-
-# aij
-mij <- llply(kij, function (x){
+mij <- llply(aij, function (x){
   matrix(0, ncol = ncol(x), nrow = nrow(x))
 })
 for(web in 1:length(dw)){
   for(resource in 1:nrow(dw[[web]])){
     for(consumer in 1:nrow(dw[[web]])){
-      if(resource < consumer){
+      if(resource > consumer){
         mij[[web]][resource, consumer] = 
           eij.fun() * # conversion efficiency
-          aij[[web]][resource, consumer] * # search rate 
+          aij.kg.m2[[web]][resource, consumer] * 
+          # search rate 
           xistar[[web]][consumer]
       }
-      if (resource > consumer){
+      if (resource < consumer){
         mij[[web]][resource, consumer] = 
-          -aij[[web]][resource, consumer] * # search rate 
+          -aij.kg.m2[[web]][resource, consumer] * 
+          # search rate 
           xistar[[web]][resource]
       }
     }
@@ -147,13 +111,16 @@ for(web in 1:length(dw)){
 }
 
 # mij * bernouli trial
+M <- llply(dat)
+
 for(web in 1:length(dat)){
   for(trial in 1:length(dat[[web]])){
-    dat[[web]][[trial]] <- mij[[web]]* 
+    M[[web]][[trial]] <- mij[[web]]* 
       dat[[web]][[trial]]
   }
 }
 
+# stability criterion ####
 stab_criterion <- function(M){
   d = mean(diag(M))
   S = nrow(M)
@@ -170,49 +137,27 @@ stab_criterion <- function(M){
       }
     }
   }
-  out <- as.vector(out[out !=0])
+  out <- as.vector(out)
   E2 = mean(out)
   stable = (sqrt(S*V)*(1+(E2 - E^2)/V)) - E < d
   rho = (E2 - E^2)/V
   result = list(stable = stable, rho = rho, vars = data.frame(d = d, S = S, E = E, V = V, E2 = E2))
   return(result)
 }
-stab_criterion(dat[[1]][[1]])
 
-transpose(map(dat$Kiwi, stab_criterion)) %>%
+stab_criterion(M[[1]][[1]])
+
+transpose(map(M$Kiwi, stab_criterion)) %>%
   .$rho %>% flatten_dbl %>% sort
 
-transpose(map(dat[[1]], stab_criterion)) %>%
+transpose(map(M[[1]], stab_criterion)) %>%
   .$stable %>% flatten_lgl() %>% sum
 
-pairs <- NULL # empty vector for pairwise interaction strengths
-for(row in 1:nrow(M)){
-  for(col in 1:ncol(M)){
-    if (row < col){
-      result = c(M[row, col], M[col, row])
-      pairs <- rbind(result, pairs)
-    }
-  }
-}
-
-x <- map(dat[[25]], ~Re(eigen(.x)$values[1])) %>% flatten_dbl() 
+ 
+x <- map(M[[1]], ~Re(eigen(.x)$values[1])) %>% flatten_dbl() 
 plot(density(x))
-density(x)
+abline(v = mean(x))
 
-
-# stability ####
-# start with stability (Tang analysis)
-# sqrt(SV)(1+(E2 - E^2)/V) - E < d
-# S = species numbers
-# V = variance of off diagonal
-# E = Mean of off diagonal
-# E2 = mean product off diagonal pairs
-# mean off diagonal
-E = mean(mat[row(mat)!=col(mat)])
-# variance off diagonal
-V = sd(mat[row(mat)!=col(mat)])^2
-# mean of off diagonal products
-# mean(Mij*Mji)
-up <- mat[upper.tri(mat)]
-low <- mat[lower.tri(mat)]
-E2 = mean(up * low)
+Re.eigen <- map(M, map, ~Re(eigen(.x)$values[1]))
+Re.eigen <- lapply(Re.eigen, flatten_dbl)
+plot(density(Re.eigen[[10]]))
