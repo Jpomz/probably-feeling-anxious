@@ -77,11 +77,10 @@ J <- map(J,
 N.scale <- map(N, scalexy, min = 0.5, max = 1)
 # link probability = J x N
 Aij <- map2(J, N.scale, ~.x*.y)
-map(Aij, plot_heat)
 
-map(Aij, hist)
-
-map(Aij, mean)
+#map(Aij, plot_heat)
+#map(Aij, hist)
+#map(Aij, mean)
 
 b_trial <- function (prob_matr, trials){
   out <- NULL
@@ -94,14 +93,14 @@ b_trial <- function (prob_matr, trials){
   out
 }
 
-b.trials <- map(Aij, b_trial, trials = 100)
-
-saveRDS(b.trials,
-        paste("data/100 bernouli trials ",
-              Sys.Date(),
-              ".rds",
-              sep = ""))
-
-
+# b.trials <- map(Aij, b_trial, trials = 100)
+# 
+# saveRDS(b.trials,
+#         paste("data/100 bernouli trials ",
+#               Sys.Date(),
+#               ".rds",
+#               sep = ""))
 
 
+b.trials <- map(Aij, b_trial, trials = 500)
+saveRDS(b.trials, "data/500 bernouli trials.rds")
