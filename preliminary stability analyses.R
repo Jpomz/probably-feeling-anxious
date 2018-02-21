@@ -57,26 +57,7 @@ aij <- map(xi.pairs,
 aij <- map(aij, 
            ~matrix(.x, nrow = sqrt(length(.x))))
 
-# get all dw pairs
-dw.pairs.kg.m2 <- map(dw, ~expand.grid(.x$kg.m2,
-                                 .x$kg.m2))
-# calculate aij for all dw pairs
-aij.kg.m2 <- map(dw.pairs.kg.m2, 
-              ~get_aij(resource = .x[,1],
-                       consumer = .x[,2]))
-# make aij.dw into matrices
-aij.kg.m2 <- map(aij.kg.m2, ~matrix(.x,
-                    nrow = sqrt(length(.x))))
 
-# avg.dw / 1000
-dw.pairs.1000 <- map(dw,
-                    ~expand.grid(.x$avg.dw / 1000,
-                                 .x$avg.dw / 1000))
-aij.dw.1000 <- map(dw.pairs.1000, 
-                 ~get_aij(resource = .x[,1],
-                          consumer = .x[,2]))
-aij.dw.1000 <- map(aij.dw.1000, ~matrix(.x,
-                                    nrow = sqrt(length(.x))))
 # eij ####
 # conversion efficiency, eij 
 # herbivore eij = runif(n, min = 0.1, max = 0.3)
@@ -96,13 +77,13 @@ for(web in 1:length(dw)){
       if(resource > consumer){
         mij[[web]][resource, consumer] = 
           eij.fun() * # conversion efficiency
-          aij.kg.m2[[web]][resource, consumer] * 
+          aij[[web]][resource, consumer] * 
           # search rate 
           xistar[[web]][consumer]
       }
       if (resource < consumer){
         mij[[web]][resource, consumer] = 
-          -aij.kg.m2[[web]][resource, consumer] * 
+          -aij[[web]][resource, consumer] * 
           # search rate 
           xistar[[web]][resource]
       }
@@ -139,25 +120,53 @@ stab_criterion <- function(M){
   }
   out <- as.vector(out)
   E2 = mean(out)
-  stable = (sqrt(S*V)*(1+(E2 - E^2)/V)) - E < d
+  stable = sqrt(S*V)*(1+(E2 - E^2)/V) - E < d
   rho = (E2 - E^2)/V
   result = list(stable = stable, rho = rho, vars = data.frame(d = d, S = S, E = E, V = V, E2 = E2))
   return(result)
 }
 
 stab_criterion(M[[1]][[1]])
+map(M[[1]], stab_criterion)
 
-transpose(map(M$Kiwi, stab_criterion)) %>%
+transpose(map(M$Italia, stab_criterion)) %>%
   .$rho %>% flatten_dbl %>% sort
 
 transpose(map(M[[1]], stab_criterion)) %>%
   .$stable %>% flatten_lgl() %>% sum
 
  
-x <- map(M[[1]], ~Re(eigen(.x)$values[1])) %>% flatten_dbl() 
-plot(density(x))
-abline(v = mean(x))
+re.eigen <- llply(M, function (x){
+  map(x, ~Re(eigen(.x)$values[1])) %>%
+    flatten_dbl()
+})
 
-Re.eigen <- map(M, map, ~Re(eigen(.x)$values[1]))
-Re.eigen <- lapply(Re.eigen, flatten_dbl)
-plot(density(Re.eigen[[10]]))
+for(i in 1:length(re.eigen)){
+  plot(density(re.eigen[[i]]))
+  abline(v = 0)
+}
+
+ llply(M, function (x){
+  map(x, ~stab_criterion(.x))
+})
+ 
+ P <- M$Italia[[1]]
+ pair <- NULL # empty vector for pairwise interaction strengths
+ for(row in 1:nrow(P)){
+   for(col in 1:ncol(P)){
+     x = P[row, col] 
+     y = P[col, row]
+     out <- c(x, y)
+     pair <- rbind(pair, out)
+   }
+ }
+plot(pair*1e6) 
+abline(h = 0, v = 0)
+
+llply(M, function (x){
+  
+})
+test <- map(M$Italia, ~c(real = Re(eigen(.x)$values[1]),
+             im = Im((eigen(.x)$values[1])))) 
+
+ldply(test) %>% plot
