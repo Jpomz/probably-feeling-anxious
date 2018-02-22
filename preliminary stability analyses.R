@@ -7,7 +7,7 @@
 library(plyr)
 library(tidyverse)
 
-dat <- readRDS("data/100 bernouli trials 2018-02-14.rds")
+dat <- readRDS("data/500 bernouli trials.rds")
 
 # lower.tri ####
 for(w in 1:length(dat)){
@@ -64,7 +64,8 @@ aij <- map(aij,
 # carnivore eij = runif(n, min = 0.4, max = 0.6)
 eij.fun <- function (n=1){
   # setting to 0.5 for now ####
-  runif(n, min = 0.5, max = 0.5) #runif(n, min = 0.4, max = 0.6)
+  runif(n, min = 0.5, max = 0.5) 
+  #runif(n, min = 0.4, max = 0.6)
 }
 
 # interaction strengths
@@ -126,47 +127,209 @@ stab_criterion <- function(M){
   return(result)
 }
 
-stab_criterion(M[[1]][[1]])
-map(M[[1]], stab_criterion)
-
-transpose(map(M$Italia, stab_criterion)) %>%
-  .$rho %>% flatten_dbl %>% sort
-
-transpose(map(M[[1]], stab_criterion)) %>%
-  .$stable %>% flatten_lgl() %>% sum
-
- 
+# real part leading eigen value 
 re.eigen <- llply(M, function (x){
   map(x, ~Re(eigen(.x)$values[1])) %>%
     flatten_dbl()
 })
+
+normalized.re.eigen <- map(re.eigen,
+                           ~.x / mean(.x))
+normalized.re.eigen<- ldply(normalized.re.eigen) %>% 
+  gather("trial", "re.eigen", -1)
+
+normalized.re.eigen %>%
+ggplot(aes(x = re.eigen, fill = .id))+
+  geom_density(alpha = 0.5)+
+  theme_classic() +
+  ylim(c(0, 5))
+
+normalized.re.eigen %>%
+  filter(.id =="BV03") %>%
+  ggplot(aes(x = re.eigen, fill = .id)) +
+  geom_density() #+ xlim(c(-1, 1)) + ylim(c(0,10))
+
+ldply(re.eigen) %>% 
+  gather("trial", "re.eigen", -1) %>%
+  ggplot(aes(x = re.eigen, fill = .id))+
+  geom_density(alpha = 0.5, adjust = 50)+
+  theme_classic() +
+  ylim(c(0, 1)) +
+  geom_vline(xintercept = 0) #+
+  facet_wrap(~.id)
+
+lapply(re.eigen, mean)
+
 
 for(i in 1:length(re.eigen)){
   plot(density(re.eigen[[i]]))
   abline(v = 0)
 }
 
- llply(M, function (x){
+llply(M, function (x){
   map(x, ~stab_criterion(.x))
 })
  
- P <- M$Italia[[1]]
- pair <- NULL # empty vector for pairwise interaction strengths
- for(row in 1:nrow(P)){
-   for(col in 1:ncol(P)){
-     x = P[row, col] 
-     y = P[col, row]
-     out <- c(x, y)
-     pair <- rbind(pair, out)
-   }
+# interaction correlations
+get_rho <- function(M){
+  E = mean(M[row(M)!=col(M)])
+  V = sd(M[row(M)!=col(M)])^2
+  # mean of off diagonal products
+  # mean(Mij*Mji)
+  out <- NULL # empty vector for pairwise interaction strengths
+  for(row in 1:nrow(M)){
+    for(col in 1:ncol(M)){
+      if (row < col){
+        result = M[row, col] * M[col, row]
+        out <- rbind(result, out)
+      }
+    }
+  }
+  out <- as.vector(out)
+  E2 = mean(out)
+  rho = (E2 - E^2)/V
+  return(rho)
+}
+
+rho <- llply(M, function (x){
+  flatten_dbl(map(x, ~get_rho(.x)))
+})
+rho <- ldply(rho) %>%
+  gather("trial", "rho", -1)
+# this is from M-N manuscript (chapter 1)
+# I need to re do this per reviewers comments from freshwater biology
+# make sure to update with proper loadings in future. 
+pca.axis <- readRDS("data/pca axis 26 sites.rds")[,c(4, 2)]
+rho <- left_join(rho, pca.axis, by = c(".id" = "site"))
+
+ggplot(rho, (aes(x = rho, fill = fct_reorder(.id, pca1))))+
+  geom_density(alpha = 0.4) +
+  theme_gray() +
+  scale_fill_grey(start = 0, end = 1) +
+  facet_wrap(~pca1) +
+  theme(strip.text = element_blank())
+
+rho %>%
+  group_by(pca1) %>%
+  summarize(mean = mean(rho), sd = sd(rho)) %>%
+  ggplot(aes(x = pca1, y = mean)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = mean - sd, ymax = mean + sd)) +
+  stat_smooth(method = "lm")
+rho.lm <- lm(rho~pca1, data = rho)
+summary(rho.lm)
+ 
+P <- M$Italia[[1]]
+pair <- NULL # empty vector for pairwise interaction strengths
+for(row in 1:nrow(P)){
+ for(col in 1:ncol(P)){
+   x = P[row, col] 
+   y = P[col, row]
+   out <- c(x, y)
+   pair <- rbind(pair, out)
  }
+}
 plot(pair*1e6) 
 abline(h = 0, v = 0)
 
-llply(M, function (x){
-  
-})
-test <- map(M$Italia, ~c(real = Re(eigen(.x)$values[1]),
-             im = Im((eigen(.x)$values[1])))) 
 
-ldply(test) %>% plot
+test <- map(M$Italia, ~list(real = Re(eigen(.x)$values),
+             im = Im((eigen(.x)$values)), 
+             real.norm = Re(eigen(.x)$values) / 
+               mean(Re(eigen(.x)$values)))) 
+
+plot(test[[1]]$im ~ test[[1]]$real)
+map(test, ldply)
+
+get_pairs <- function (M){
+  pair <- NULL
+  for(row in 1:nrow(M)){
+    for(col in 1:ncol(M)){
+      if(M[row, col] !=0){
+        x = M[row, col] 
+        y = M[col, row]
+        out <- c(x, y)
+        pair <- rbind(pair, out)
+      }
+    }
+  }
+  pair
+}
+
+burke.pairs <- (map(M[[1]], get_pairs))
+plot(distinct(burke.pairs) * 1e6)
+abline(h = 0, v = 0)
+
+italia.pairs <- map(M$Italia, get_pairs) 
+plot(italia.pairs[[1]]*1e6)
+
+
+x <- c()
+y <- c()
+for(row in 1:nrow(M)){
+  for(col in 1:ncol(M)){
+    if(M[row, col] !=0){
+      x = M[row, col] 
+      y = M[col, row]
+      out <- c(x, y)
+      pair <- rbind(pair, out)
+    }
+  }
+}
+
+
+
+
+# mean absolute value interaction strength
+avg.intxn <- llply(M, function (x){
+  flatten_dbl(map(x, ~mean(abs(.x))))
+})
+
+x <- ldply(map(avg.intxn, mean))
+x <- left_join(x, pca.axis, by = c(".id" = "site"))
+plot(V1~pca1, data = x)
+
+
+ldply(avg.intxn) %>%
+  ggplot(aes(x = V1, fill = .id))+
+  geom_density(alpha = 0.5)
+
+
+
+
+stab_value <- function(M){
+  #d = mean(diag(M))
+  S = nrow(M)
+  E = mean(M[row(M)!=col(M)])
+  V = sd(M[row(M)!=col(M)])^2
+  # mean of off diagonal products
+  # mean(Mij*Mji)
+  out <- NULL # empty vector for pairwise interaction strengths
+  for(row in 1:nrow(M)){
+    for(col in 1:ncol(M)){
+      if (row < col){
+        result = M[row, col] * M[col, row]
+        out <- rbind(result, out)
+      }
+    }
+  }
+  out <- as.vector(out)
+  E2 = mean(out)
+  stable = sqrt(S*V)*(1+(E2 - E^2)/V) - E 
+  return(stable)
+}
+
+stab.val <- llply(M, function (x){
+  flatten_dbl(map(x, stab_value))
+})
+
+ldply(stab.val) %>% gather("trial", "stab", -1) %>%
+  group_by(.id) %>%
+  summarize(stab = mean(stab)) %>%
+  left_join(pca.axis, by = c(".id" = "site")) %>%
+  ggplot(aes(x = pca1, y = stab)) +
+  geom_point()
+
+
+  ggplot(aes(x = stab, fill = .id))+
+  geom_density(alpha = 0.5)
