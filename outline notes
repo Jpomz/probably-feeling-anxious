@@ -5,6 +5,7 @@ Predicting link probabilities in food webs across AMD gradient.
 Training data
 -Individual pred + prey from Woodward
   - emailed to me, check gmail for date (I think it actually came from someone else)
+  - individual data from Tadnoll Brook - Emailed from Iwan Jones 27 Feb 2018
 -Individual predator / mean prey body size from Warburton
   - formulas are there, need to estimate dw
 -Species average pred/prey from Thompson

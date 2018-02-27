@@ -25,6 +25,13 @@ bs.g <- bs %>% mutate(predMass = predMass / 1000,
                       preyMass = preyMass /1000)
 bs.g$study <- "Woodward"
 
+# tadnoll brook data in mg dw
+tb <- read_csv("data/raw data/tadnoll pred prey biomass.csv")
+# convert to grams
+tb.g <- tb %>% mutate(predMass = predMass / 1000,
+                      preyMass = preyMass /1000)
+tb.g$study <- "tadnoll"
+
 # warburton ####
 war <- read_csv("data/raw data/warburton.csv")
 # individual predator length, average prey length
@@ -54,10 +61,17 @@ taieri$study <- "thompson"
 
 all.dat <- bind_rows(war.g,
                      bs.g,
+                     tb.g,
                      taieri)
-ggplot(all.dat, aes(log10(predMass), log10(preyMass)))+
+ggplot(all.dat, aes(log10(predMass), log10(preyMass), color = study))+
   geom_point()+
-  stat_quantile(quantiles = c(0.05,0.95))
+  stat_quantile(quantiles = c(0.01,0.97))
+
+all.dat %>% filter(study == "Woodward" | study == "tadnoll") %>%
+  ggplot(aes(log10(predMass), log10(preyMass)))+
+  geom_point()+
+  stat_quantile(quantiles = c(0.01,0.97))
+
 
 # Trait match####
 MPred <- log10(all.dat$predMass)
@@ -74,12 +88,12 @@ pars_pre <- fit_it(integrated_model,
               par_hi = c(a0 = 10, a1 = 10, b0 = 10, b1 = 10),
               max.time = mt)
 pars_pre
-# plot_pred(pars = pars_pre, 
-#           Tlevel1 = MPrey, 
-#           Tlevel2 = MPred, 
-#           xlab = "log (Predator body size)", 
-#           ylab = "log (prey body size)", 
-#           pch = "0")
+plot_pred(pars = pars_pre,
+          Tlevel1 = MPrey,
+          Tlevel2 = MPred,
+          xlab = "log (Predator body size)",
+          ylab = "log (prey body size)",
+          pch = "0")
 # 
 # pars_niche <- fit_it(niche_model, 
 #               Tlevel1 = MPrey,  
@@ -127,25 +141,25 @@ link.probs <- llply(M, function (x){
                      replicates = 100)
 })
 
-# # plot link probabilities for illustration
-# mybreaks <- seq(0,1,0.1)
-# for (i in 1:length(link.probs)){
-#   heatmap.2(matrix(link.probs[[i]][[1]],
-#                    length(dataset[[i]]$avg.dw),
-#                    length(dataset[[i]]$avg.dw)),
-#             Rowv = NA,
-#             Colv = NA,
-#             scale = "none",
-#             trace = "none",
-#             dendrogram = "none",
-#             breaks = mybreaks,
-#             key = F,
-#             labRow = NA,
-#             labCol = NA,
-#             main= "Probability of interaction",
-#             xlab = "Consumer",
-#             ylab = "Resource")
-# }
+# plot link probabilities for illustration
+mybreaks <- seq(0,1,0.1)
+for (i in 1:length(link.probs)){
+  heatmap.2(matrix(link.probs[[i]][[1]],
+                   length(dataset[[i]]$avg.dw),
+                   length(dataset[[i]]$avg.dw)),
+            Rowv = NA,
+            Colv = NA,
+            scale = "none",
+            trace = "none",
+            dendrogram = "none",
+            breaks = mybreaks,
+            key = F,
+            labRow = NA,
+            labCol = NA,
+            main= "Probability of interaction",
+            xlab = "Consumer",
+            ylab = "Resource")
+}
 
 # link.probs[[i]][[1]] == vector of link probabilities
 # pull out just that element
