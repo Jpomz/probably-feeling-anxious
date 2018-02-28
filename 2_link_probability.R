@@ -32,7 +32,7 @@ tb.g <- tb %>% mutate(predMass = predMass / 1000,
                       preyMass = preyMass /1000)
 tb.g$study <- "tadnoll"
 
-# warburton ####
+# # warburton ####
 war <- read_csv("data/raw data/warburton.csv")
 # individual predator length, average prey length
 # 1) weight interactions by frequency of interaction
@@ -41,9 +41,9 @@ war <- read_csv("data/raw data/warburton.csv")
 # 2) convert lengths to biomass (formula parameters in dataset)
 # (base^(ln_a + (b * log(length)))) / g_conversion
 
-# 1 
-war <- war[rep(seq_len(nrow(war)),
-                 times = war$number_missing_corrected), ]
+# 1
+# war <- war[rep(seq_len(nrow(war)),
+#                  times = war$number_missing_corrected), ]
 
 war.g <- war %>%
   transmute(predMass = (pred_base^
@@ -67,10 +67,10 @@ ggplot(all.dat, aes(log10(predMass), log10(preyMass), color = study))+
   geom_point()+
   stat_quantile(quantiles = c(0.01,0.97))
 
-all.dat %>% filter(study == "Woodward" | study == "tadnoll") %>%
-  ggplot(aes(log10(predMass), log10(preyMass)))+
-  geom_point()+
-  stat_quantile(quantiles = c(0.01,0.97))
+# all.dat %>% filter(study == "Woodward" | study == "tadnoll") %>%
+#   ggplot(aes(log10(predMass), log10(preyMass)))+
+#   geom_point()+
+#   stat_quantile(quantiles = c(0.01,0.97))
 
 
 # Trait match####
@@ -87,7 +87,7 @@ pars_pre <- fit_it(integrated_model,
               par_lo = c(a0 = -10, a1 = 0, b0 = -10, b1 = -10),
               par_hi = c(a0 = 10, a1 = 10, b0 = 10, b1 = 10),
               max.time = mt)
-pars_pre
+#pars_pre
 plot_pred(pars = pars_pre,
           Tlevel1 = MPrey,
           Tlevel2 = MPred,
