@@ -27,6 +27,7 @@ bs.g$study <- "Woodward"
 
 # tadnoll brook data in mg dw
 tb <- read_csv("data/raw data/tadnoll pred prey biomass.csv")
+tb <- distinct(tb)
 # convert to grams
 tb.g <- tb %>% mutate(predMass = predMass / 1000,
                       preyMass = preyMass /1000)
