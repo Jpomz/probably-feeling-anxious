@@ -34,6 +34,7 @@ AMD data
 - link probability, Aij ~ J x N
   - J = Niche, based on body size rules
   - N = Neutral, product of relative abundances
+    - look at poisot 2016 for non-independence of neutral abundances
   - rescale Aij [0,1]
 - use species averages? 
   - need to do some data cleaning
