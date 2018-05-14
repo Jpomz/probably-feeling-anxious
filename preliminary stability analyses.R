@@ -27,14 +27,26 @@ for(w in 1:length(dat)){
 set.seed(7968) # for reproducibility
 dw <- readRDS("data/AMD fish invert dw abundance.RDS")
 dw <- arrange(dw, site, avg.dw)
-dw <- mutate(dw, kg.m2 = (avg.dw / 1000) * 16.66667)
+# avg.dw == grams, convert to kg 
+dw <- mutate(dw, kg.m2 = (avg.dw / 1000) * density)
 dw <- split(dw, list(dw$site))
 
 # xistar ####
-# could also calc as: xi = kg.m2 * density
 xistar <- llply(dw, function (x){
   (x$avg.dw / 1000) * x$density
 })
+
+# # eastimate xistar as in Tang et al. 2014
+# get_xistar <- function(dw){
+#   x0 = -1.16
+#   gamma = -.675
+#   result = 10^(x0 + 3*gamma) * dw^(1+gamma)
+#   return(result)
+# }
+# 
+# xistar <- llply(dw, function (x){
+#      get_xistar(x$avg.dw/1000)
+#    })
 
 # aij ####
 # function to calculate mass specific search rate
@@ -44,7 +56,7 @@ get_aij <- function (resource, consumer,
                      a0 = -3.50, bi = -0.15){
   kij = resource / consumer
   aij = 10^a0 * consumer^bi *
-    ((kij)^0.46 / (1 + (kij)^2))
+    (kij^0.46 / (1 + kij^2))
   return(aij)
 }
 # get all xistar pairs
@@ -80,13 +92,13 @@ for(web in 1:length(dw)){
           eij.fun() * # conversion efficiency
           aij[[web]][resource, consumer] * 
           # search rate 
-          xistar[[web]][consumer]
+          xistar[[web]][resource]
       }
       if (resource < consumer){
         mij[[web]][resource, consumer] = 
           -aij[[web]][resource, consumer] * 
           # search rate 
-          xistar[[web]][resource]
+          xistar[[web]][consumer]
       }
     }
   }
@@ -101,6 +113,12 @@ for(web in 1:length(dat)){
       dat[[web]][[trial]]
   }
 }
+
+ test <- lapply(M, "[[", 10)
+# test <- llply(test, function (x){
+#   x * 10e06
+# })
+# map(test, stability, s2 = 1)
 
 # stability criterion ####
 stab_criterion <- function(M){
@@ -132,9 +150,59 @@ re.eigen <- llply(M, function (x){
   map(x, ~Re(eigen(.x)$values[1])) %>%
     flatten_dbl()
 })
+re.eigen.df <- ldply(re.eigen) %>% 
+  gather("trial", "re.eigen", -1)
+pca.axis <- readRDS("data/pca axis 26 sites.rds")[,c(4, 2)]
+re.eigen.df <- left_join(re.eigen.df, pca.axis, by = c(".id" = "site"))
+
+# ggplot(re.eigen.df, aes(x = pca1, y = re.eigen))+
+#   geom_point() +
+#   geom_smooth(method = "lm") +
+#   stat_summary(fun.y = "mean", color = "red",
+#                geom = "point", size = 2, na.rm = TRUE) +
+#   geom_hline(aes(yintercept = 0), linetype = 2) +
+#   coord_cartesian(ylim = (c(-2e-9, 5e-10))) +
+#   theme_classic()
+# 
+# # figure out plot
+# re.eigen.df %>%
+#   filter(.id %in% c("Italia", "Hot")) %>%
+# ggplot(aes(x = re.eigen))+
+#   geom_density(adjust = 0.5) +
+#   facet_wrap(~pca1, scales = "free")+
+#   geom_vline(aes(xintercept = 0), linetype = 2) +
+#   theme_classic() +
+#   theme(strip.text = element_blank())
+# 
+# 
+# ggplot(re.eigen.df, aes(x = re.eigen))+
+#   geom_density(adjust = 2) +
+#   facet_wrap(~pca1, scales = "free")+
+#   geom_vline(aes(xintercept = 0), linetype =2,
+#              size = 1) +
+#   theme_classic() +
+#   theme(strip.text = element_blank())
+
+# proportion < 0
+prop.stable <- re.eigen.df %>%
+  mutate(stable = re.eigen < 0) %>%
+  filter(stable == TRUE) %>%
+  count(.id, pca1, stable) %>%
+  mutate(prop = n / 500)
+
+ggplot(prop.stable, aes(x = pca1, y = prop)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  #geom_hline(aes(yintercept = 0), linetype = 1) +
+  theme_bw() +
+  scale_y_continuous(minor_breaks = seq(-0.2 , 1.1, .1),
+                     breaks = seq(-0.2, 1.1, 0.2))
+
+prop.lm <- lm(prop~pca1, data = prop.stable)
+summary(prop.lm)
 
 normalized.re.eigen <- map(re.eigen,
-                           ~.x / mean(.x))
+          ~(.x /  mean(.x)))
 normalized.re.eigen<- ldply(normalized.re.eigen) %>% 
   gather("trial", "re.eigen", -1)
 
@@ -142,21 +210,23 @@ normalized.re.eigen %>%
 ggplot(aes(x = re.eigen, fill = .id))+
   geom_density(alpha = 0.5)+
   theme_classic() +
-  ylim(c(0, 5))
+  ylim(c(0, 5)) +
+  xlim(c(-1, 2))
 
-normalized.re.eigen %>%
-  filter(.id =="BV03") %>%
-  ggplot(aes(x = re.eigen, fill = .id)) +
-  geom_density() #+ xlim(c(-1, 1)) + ylim(c(0,10))
+# normalized.re.eigen %>%
+#   filter(.id =="BV03") %>%
+#   ggplot(aes(x = re.eigen, fill = .id)) +
+#   geom_density() #+ xlim(c(-1, 1)) + ylim(c(0,10))
 
 ldply(re.eigen) %>% 
   gather("trial", "re.eigen", -1) %>%
   ggplot(aes(x = re.eigen, fill = .id))+
-  geom_density(alpha = 0.5, adjust = 50)+
+  geom_density(alpha = 0.5#, adjust = 50
+               )+
   theme_classic() +
   ylim(c(0, 1)) +
   geom_vline(xintercept = 0) #+
-  facet_wrap(~.id)
+  #facet_wrap(~.id)
 
 lapply(re.eigen, mean)
 

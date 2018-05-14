@@ -18,8 +18,7 @@ source("predict.niche.prob.R")
 
 # broadstone ####
 # individual pred-prey biomass data in mg
-bs <- read_csv("data/raw data/BroadstoneData_AERv45ch3.csv",
-               skip = 16)[,-1]
+bs <- read_csv("data/raw data/BroadstoneData_AERv45ch3.csv", skip = 16)[,-1]
 # convert to grams to match other datasets
 bs.g <- bs %>% mutate(predMass = predMass / 1000,
                       preyMass = preyMass /1000)
@@ -68,17 +67,17 @@ ggplot(all.dat, aes(log10(predMass), log10(preyMass), color = study))+
   geom_point()+
   stat_quantile(quantiles = c(0.01,0.97))
 
-# all.dat %>% filter(study == "Woodward" | study == "tadnoll") %>%
-#   ggplot(aes(log10(predMass), log10(preyMass)))+
-#   geom_point()+
-#   stat_quantile(quantiles = c(0.01,0.97))
+all.dat %>% filter(study == "Woodward" | study == "tadnoll") %>%
+  ggplot(aes(log10(predMass), log10(preyMass)))+
+  geom_point()+
+  stat_quantile(quantiles = c(0.01,0.97))
 
 
 # Trait match####
 MPred <- log10(all.dat$predMass)
 MPrey <- log10(all.dat$preyMass) 
 
-mt <- 60 #Define max.time to 60 sec to run things fast. Set to minimum 900 for a decent estimation of parameters.
+mt <- 900 #Define max.time to 60 sec to run things fast. Set to minimum 900 for a decent estimation of parameters.
 pars_pre <- fit_it(integrated_model, 
               Tlevel1 = MPrey,  
               Tlevel2 = MPred,

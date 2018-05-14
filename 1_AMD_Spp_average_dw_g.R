@@ -16,20 +16,30 @@ bugs$area <- 0.06
 bugs <- rename(bugs, taxa = Genus)
 # drop variables
 bugs <- bugs %>% select(taxa, site, surber, dw, area)
+
+bugs <- bugs %>%
+  group_by(site,  taxa) %>%
+  summarize(avg.dw = mean(dw),
+            count = n(),
+            area = mean(area),
+            density = (count / 3) * 16.66667)
+
+
 fish <- fish %>% 
   select(taxa, site, dw, area)
+fish <- fish %>%
+  group_by(site, taxa) %>%
+  summarize(avg.dw = mean(dw),
+            count = n(),
+            area = mean(area),
+            density = count / area)
+
 
 # bind rows
 full.data <- bind_rows(bugs, fish)
 
 # calculate average dw, density, area, per site and taxa
 dataset <- full.data %>% 
-  group_by(site,  taxa) %>%
-  summarize(avg.dw = mean(dw),
-            count = n(),
-            area = mean(area),
-            density = count / area) %>%
-  # calculate total and relative abundances per taxa
   group_by(site) %>%
   mutate(tot.ab = sum(density),
          rel.ab = density / tot.ab) %>%

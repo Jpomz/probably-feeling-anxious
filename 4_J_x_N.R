@@ -46,10 +46,10 @@ rm_niche <- function(matrix, taxa){
   matrix
 }
 # function to "fix" probabilities of fish predators
-fish_prob <- function(matrix, taxa){
+fish_prob <- function(matrix, taxa, mean, sd){
   for(name in (
     colnames(matrix)[colnames(matrix) %in% taxa])){
-    matrix[,name] <- rnorm(nrow(matrix), 0.8, 0.01)
+    matrix[,name] <- rnorm(nrow(matrix), mean, sd)
   }
   matrix
 }
@@ -62,15 +62,17 @@ N <- readRDS("data/AMD relative abundance matrices.rds")
 
 # prune niche forbidden links
 taxa.forbid <- c("Acari", "Austroclima", "Austrosimulium", "Blephariceridae", "Coloburiscus", "Copepoda", "Deleatidium", "Elmidae", "Elmidae Adult", "Eriopterini", "Helicopsyche", "Hexatomini", "Hydraenidae", "Hydrophilidae", "Nesameletus","Oligochaetae", "Olinga","Ostracoda", "Oxyethira", "Paraleptamphopus", "Platyhelminthes", "Potamopyrgus", "Rakiura", "Scirtidae", "Spaniocerca", "Spaniocercoides", "Zelandobius", "Zelolessica", "Zephlebia")
+taxa.fish <- c("Salmo.trutta", "Anguilla.australis",
+            "Galaxias.fasciatus", "Galaxias.maculatus",
+            "Gobiomorphus.huttoni")
 J <- map(J,
          rm_niche,
          taxa = taxa.forbid)
-# fix fish probabilities runif(0.5, 1)
+# fix fish probabilities rnorm(mean = 0.7, 0.1)
 J <- map(J,
          fish_prob,
-         taxa = c("Salmo.trutta", "Anguilla.australis",
-                  "Galaxias.fasciatus", "Galaxias.maculatus",
-                  "Gobiomorphus.huttoni"))
+         taxa = taxa.fish,
+         mean = 0.7, sd = 0.1)
 
 # scale N first
 # scale N [0.5,1]
