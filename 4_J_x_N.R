@@ -80,6 +80,9 @@ N.scale <- map(N, scalexy, min = 0.5, max = 1)
 # link probability = J x N
 Aij <- map2(J, N.scale, ~.x*.y)
 
+# rescale probabilities between 0 and 1
+Aij <- map(Aij, scalexy, min = 0, max = 1)
+
 #map(Aij, plot_heat)
 #map(Aij, hist)
 #map(Aij, mean)

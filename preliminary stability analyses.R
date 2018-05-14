@@ -196,7 +196,11 @@ ggplot(prop.stable, aes(x = pca1, y = prop)) +
   #geom_hline(aes(yintercept = 0), linetype = 1) +
   theme_bw() +
   scale_y_continuous(minor_breaks = seq(-0.2 , 1.1, .1),
-                     breaks = seq(-0.2, 1.1, 0.2))
+                     breaks = seq(-0.2, 1.1, 0.2)) +
+  labs(x = "Mining gradient", y = "Proportion stable") +
+  theme(axis.title = element_text(size = 20))
+ggsave("figures/proportion stable.png")
+
 
 prop.lm <- lm(prop~pca1, data = prop.stable)
 summary(prop.lm)

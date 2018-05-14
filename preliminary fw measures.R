@@ -50,8 +50,31 @@ fw.measures %>% group_by(.id, pca1) %>%
 
 
 
+library(Hmisc)
+
+fwpointrange <- function(data, x = "pca1", y, ylab = NULL){
+  ggplot(data, aes(x = data[[x]], y = data[[y]])) +
+    stat_summary(fun.y = mean,
+                 fun.ymin = function(x) mean(x) - sd(x),
+                 fun.ymax = function(x) mean(x) + sd(x),
+                 geom = "pointrange") +
+    theme_bw() +
+    if (is.null(ylab))
+      labs(x = "PC1", y = y)
+  else
+    labs(x = "PC1", y = ylab)
+}
+
+fwpointrange(fw.measures, y = "C") +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
+fwpointrange(fw.measures, y = "Gensd") +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
+fwpointrange(fw.measures, y = "Vulsd") +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
 
 
+test <- AIC(lm(C ~ pca1, fw.measures), lm(C~ pca1 + I(pca1^2), fw.measures))
+    
 
-
-
+summary(lm(C~ pca1 + I(pca1^2), fw.measures))
+summary(lm(C~ pca1 , fw.measures))
