@@ -31,7 +31,7 @@ dw <- arrange(dw, site, avg.dw)
 dw <- mutate(dw, kg.m2 = (avg.dw / 1000) * density)
 dw <- split(dw, list(dw$site))
 
-# xistar ####
+# # xistar ####
 xistar <- llply(dw, function (x){
   (x$avg.dw / 1000) * x$density
 })
@@ -188,15 +188,15 @@ prop.stable <- re.eigen.df %>%
   mutate(stable = re.eigen < 0) %>%
   filter(stable == TRUE) %>%
   count(.id, pca1, stable) %>%
-  mutate(prop = n / 500)
+  mutate(prop = n / 500,
+         sd.prop = sqrt((prop*(1 - prop))/500))
 
-ggplot(prop.stable, aes(x = pca1, y = prop)) +
-  geom_point() +
+ggplot(prop.stable, aes(x = pca1, y = prop,
+                        ymin = prop - sd.prop,
+                        ymax = prop + sd.prop)) +
+  geom_pointrange() +
   geom_smooth(method = "lm") +
-  #geom_hline(aes(yintercept = 0), linetype = 1) +
   theme_bw() +
-  scale_y_continuous(minor_breaks = seq(-0.2 , 1.1, .1),
-                     breaks = seq(-0.2, 1.1, 0.2)) +
   labs(x = "Mining gradient", y = "Proportion stable") +
   theme(axis.title = element_text(size = 20))
 ggsave("figures/proportion stable.png")
