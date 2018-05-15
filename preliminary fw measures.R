@@ -50,7 +50,7 @@ fw.measures %>% group_by(.id, pca1) %>%
 
 
 
-library(Hmisc)
+#library(Hmisc)
 
 fwpointrange <- function(data, x = "pca1", y, ylab = NULL){
   ggplot(data, aes(x = data[[x]], y = data[[y]])) +
@@ -59,19 +59,35 @@ fwpointrange <- function(data, x = "pca1", y, ylab = NULL){
                  fun.ymax = function(x) mean(x) + sd(x),
                  geom = "pointrange") +
     theme_bw() +
+    theme(axis.title = element_text(size = 20)) +
     if (is.null(ylab))
-      labs(x = "PC1", y = y)
+      labs(x = "Mining gradient", y = y) 
   else
-    labs(x = "PC1", y = ylab)
+    labs(x = "Mining gradient", y = ylab) 
 }
 
+fwpointrange(fw.measures, y = "L") +
+  geom_smooth(method = "lm")
+ggsave("figures/L.png")
 fwpointrange(fw.measures, y = "C") +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
-fwpointrange(fw.measures, y = "Gensd") +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
-fwpointrange(fw.measures, y = "Vulsd") +
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2))
-
+  geom_smooth(method = "lm")
+ggsave("figures/C.png")
+fwpointrange(fw.measures, y = "Gensd", ylab = "SD(Gen)") +
+  geom_smooth(method = "lm")#, formula = y ~ x + I(x^2))
+ggsave("figures/Gsd.png")
+fwpointrange(fw.measures, y = "Vulsd", ylab = "SD(Vul)") +
+  geom_smooth(method = "lm")#, formula = y ~ x + I(x^2))
+ggsave("figures/Vsd.png")
+fwpointrange(fw.measures, y = "B") +
+  geom_smooth(method = "lm")
+fwpointrange(fw.measures, y = "I") +
+  geom_smooth(method = "lm")
+fwpointrange(fw.measures, y = "T") +
+  geom_smooth(method = "lm")
+fwpointrange(fw.measures, y = "Maxsim") +
+  geom_smooth(method = "lm")
+fwpointrange(fw.measures, y = "max.TL") +
+  geom_smooth(method = "lm")
 
 test <- AIC(lm(C ~ pca1, fw.measures), lm(C~ pca1 + I(pca1^2), fw.measures))
     
