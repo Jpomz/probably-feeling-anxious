@@ -66,11 +66,19 @@ fwpointrange <- function(data, x = "pca1", y, ylab = NULL){
     labs(x = "Mining gradient", y = ylab) 
 }
 
+<<<<<<< HEAD
 fwpointrange(fw.measures, y = "L") #+
 #  geom_smooth(method = "lm")
 ggsave("figures/L.png")
 fwpointrange(fw.measures, y = "C") #+
 #  geom_smooth(method = "lm")
+=======
+fwpointrange(fw.measures, y = "L") +
+  geom_smooth(method = "lm")
+ggsave("figures/L.png")
+fwpointrange(fw.measures, y = "C") +
+  geom_smooth(method = "lm")
+>>>>>>> 4169fa6a3090dd75d7c4c7d95ceb38fd0fc9347b
 ggsave("figures/C.png")
 fwpointrange(fw.measures, y = "Gensd", ylab = "SD(Gen)") +
   geom_smooth(method = "lm")#, formula = y ~ x + I(x^2))
