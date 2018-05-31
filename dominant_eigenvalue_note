@@ -1,0 +1,18 @@
+dominant eigenvalues
+
+After scouring the interwebs, I believe that the dominant eigenvalue is the one with the largest absolute value. 
+
+e.g. if eigenvalues = (-10, 2, 9, 0, -3), then the dominant = -10. 
+
+The default ouput of eigen(x)$values places them in DECREASING order according to modulus (e.g. absolute magnitude). So the first value is the one with the greatest magnitude. Therefore, need to extract the real part of the first value. 
+
+So the correct syntax for finding the dominant eigenvalue is:
+Re(eigen(x)$values[1]) 
+
+NOT
+
+max(Re(eigen(M[[1]][[1]])$values))
+e.g. above is what was used in the stability functions from Harvey or Sauve or one of those. 
+
+
+Re(eigen(x)$values[1]) 
