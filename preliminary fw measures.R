@@ -31,15 +31,15 @@ fwline <- function(data, x = "pca1", y, ylab = NULL){
     labs(x = "PC1", y = ylab)
 }
 
-fwline(fw.measures, y = "S")
-fwline(fw.measures, y = "L")
-fwline(fw.measures, y = "C")
-fwline(fw.measures, y = "B")
-fwline(fw.measures, y = "I")
-fwline(fw.measures, y = "T")
-fwline(fw.measures, y = "Gensd")
-fwline(fw.measures, y = "Vulsd")
-fwline(fw.measures, y = "max.TL")
+# fwline(fw.measures, y = "S")
+# fwline(fw.measures, y = "L")
+# fwline(fw.measures, y = "C")
+# fwline(fw.measures, y = "B")
+# fwline(fw.measures, y = "I")
+# fwline(fw.measures, y = "T")
+# fwline(fw.measures, y = "Gensd")
+# fwline(fw.measures, y = "Vulsd")
+# fwline(fw.measures, y = "max.TL")
 
 fw.measures %>% group_by(.id, pca1) %>%
   summarize(L.m = mean(L), L.sd = sd(L),
@@ -66,11 +66,11 @@ fwpointrange <- function(data, x = "pca1", y, ylab = NULL){
     labs(x = "Mining gradient", y = ylab) 
 }
 
-fwpointrange(fw.measures, y = "L") +
-  geom_smooth(method = "lm")
+fwpointrange(fw.measures, y = "L") #+
+#  geom_smooth(method = "lm")
 ggsave("figures/L.png")
-fwpointrange(fw.measures, y = "C") +
-  geom_smooth(method = "lm")
+fwpointrange(fw.measures, y = "C") #+
+#  geom_smooth(method = "lm")
 ggsave("figures/C.png")
 fwpointrange(fw.measures, y = "Gensd", ylab = "SD(Gen)") +
   geom_smooth(method = "lm")#, formula = y ~ x + I(x^2))

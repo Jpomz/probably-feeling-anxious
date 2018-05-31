@@ -195,7 +195,8 @@ ggplot(prop.stable, aes(x = pca1, y = prop,
                         ymin = prop - sd.prop,
                         ymax = prop + sd.prop)) +
   geom_pointrange() +
-  geom_smooth(method = "lm") +
+  ylim(c(0, 1.0)) +
+  #geom_smooth(method = "lm") +
   theme_bw() +
   labs(x = "Mining gradient", y = "Proportion stable") +
   theme(axis.title = element_text(size = 20))
