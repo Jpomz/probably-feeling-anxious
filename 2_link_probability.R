@@ -3,11 +3,9 @@
 #J Pomz
 # jfpomeranz@gmail.com
 
-# 12 feb 2018 - 
-# at this time, data used to predict link probability is missing larger body sizes (e.g. fish)
-# probabilities as currently predicted do a poor job for fish
-# e.g. most probabilities <<<<<< small
-# using this for now to get preliminary results for ESA abstract, but will need to revisit this and decide what to do. Potentially get other parameterization data???
+# 6 jun 2018
+# using individual data from Broadstone stream and Tadnoll Brook
+# received via email from Guy Woodward and Iwan Jones respectively
 
 library(plyr)
 library(tidyverse)
@@ -26,58 +24,25 @@ bs.g$study <- "Woodward"
 
 # tadnoll brook data in mg dw
 tb <- read_csv("data/raw data/tadnoll pred prey biomass.csv")
-tb <- distinct(tb)
+#tb <- read_csv("data/raw data/TB_all_events.csv")[,-3]
+tb <- tb[complete.cases(tb),]
 # convert to grams
 tb.g <- tb %>% mutate(predMass = predMass / 1000,
                       preyMass = preyMass /1000)
 tb.g$study <- "tadnoll"
 
-# # warburton ####
-war <- read_csv("data/raw data/warburton.csv")
-# individual predator length, average prey length
-# 1) weight interactions by frequency of interaction
-# e.g. "number_missing_corected" == 2 --> rep that row x 2
-# == 0 --> remove from dataset
-# 2) convert lengths to biomass (formula parameters in dataset)
-# (base^(ln_a + (b * log(length)))) / g_conversion
-
-# 1
-# war <- war[rep(seq_len(nrow(war)),
-#                  times = war$number_missing_corrected), ]
-
-war.g <- war %>%
-  transmute(predMass = (pred_base^
-  (pred_ln_a + (pred_b * (log(pred_length_mm,
-            base = pred_base))))) / pred_g_conversion,
-            preyMass = prey_base^
-    (prey_ln_a + (prey_b * (log(prey_length_mm,
-            base = prey_base)))) / prey_g_conversion)
-war.g$study <- "Warburton"
-
-# Taieri ####
-taieri <- readRDS("data/Taieri pred prey estimated dw g.RDS")
-taieri <- rename(taieri, predMass=pred, preyMass=prey)
-taieri$study <- "thompson"
-
-all.dat <- bind_rows(war.g,
-                     bs.g,
-                     tb.g,
-                     taieri)
+# combine data sets
+all.dat <- bind_rows(bs.g, tb.g)
 ggplot(all.dat, aes(log10(predMass), log10(preyMass), color = study))+
   geom_point()+
-  stat_quantile(quantiles = c(0.01,0.97))
-
-all.dat %>% filter(study == "Woodward" | study == "tadnoll") %>%
-  ggplot(aes(log10(predMass), log10(preyMass)))+
-  geom_point()+
-  stat_quantile(quantiles = c(0.01,0.97))
-
+  stat_quantile(quantiles = c(0.05,0.95)) +
+  theme_bw()
 
 # Trait match####
 MPred <- log10(all.dat$predMass)
 MPrey <- log10(all.dat$preyMass) 
 
-mt <- 900 #Define max.time to 60 sec to run things fast. Set to minimum 900 for a decent estimation of parameters.
+mt <- 60 #Define max.time to 60 sec to run things fast. Set to minimum 900 for a decent estimation of parameters.
 pars_pre <- fit_it(integrated_model, 
               Tlevel1 = MPrey,  
               Tlevel2 = MPred,
@@ -95,36 +60,36 @@ plot_pred(pars = pars_pre,
           ylab = "log (prey body size)",
           pch = "0")
 # 
-# pars_niche <- fit_it(niche_model, 
-#               Tlevel1 = MPrey,  
-#               Tlevel2 = MPred,
-#               mean_Tlevel1 = mean(MPrey),
-#               sd_Tlevel1 = sd(MPrey),
-#               pars = c(a0 = 0, a1 = 0, b0 = 0, b1 = 0),
-#               par_lo = c(a0 = -10, a1 = 0, b0 = -10, b1 = -10),
-#               par_hi = c(a0 = 10, a1 = 10, a1b0 = 10, b1 = 10),
-#               max.time = mt)
+pars_niche <- fit_it(niche_model,
+              Tlevel1 = MPrey,
+              Tlevel2 = MPred,
+              mean_Tlevel1 = mean(MPrey),
+              sd_Tlevel1 = sd(MPrey),
+              pars = c(a0 = 0, a1 = 0, b0 = 0, b1 = 0),
+              par_lo = c(a0 = -10, a1 = 0, b0 = -10, b1 = -10),
+              par_hi = c(a0 = 10, a1 = 10, a1b0 = 10, b1 = 10),
+              max.time = mt)
 # pars_pre
 # pars_niche
-# plot_pred(pars = pars_niche,
-#           Tlevel1 = MPrey, 
-#           Tlevel2 = MPred,
-#           xlab = "log (Predator body size)", 
-#           ylab = "log (prey body size)",
-#           pch = "0")
-# 
-# # compare integrated, niche, neutral models
-# lh_model <- -integrated_model(pars_pre, MPrey,
-#                               MPred, mean(MPrey), sd(MPrey))
-# lh_niche <- -niche_model(pars_niche, MPrey, MPred,
-#                          mean(MPrey), sd(MPrey))
-# lh_neutral <- -neutral_model(pars = NULL, MPrey, MPred,
-#                              mean(MPrey), sd(MPrey))
-# barplot(c(lh_model, lh_niche, lh_neutral),
-#         names.arg = c("integrated",
-#                       "niche",
-#                       "neutral"))
-# # integrated is "better"
+plot_pred(pars = pars_niche,
+          Tlevel1 = MPrey,
+          Tlevel2 = MPred,
+          xlab = "log (Predator body size)",
+          ylab = "log (prey body size)",
+          pch = "0")
+
+# compare integrated, niche, neutral models
+lh_model <- -integrated_model(pars_pre, MPrey,
+                              MPred, mean(MPrey), sd(MPrey))
+lh_niche <- -niche_model(pars_niche, MPrey, MPred,
+                         mean(MPrey), sd(MPrey))
+lh_neutral <- -neutral_model(pars = NULL, MPrey, MPred,
+                             mean(MPrey), sd(MPrey))
+barplot(c(lh_model, lh_niche, lh_neutral),
+        names.arg = c("integrated",
+                      "niche",
+                      "neutral"))
+# integrated is "better"
 
 # AMD data ####
 dataset <- readRDS("data/AMD fish invert dw abundance.RDS")
