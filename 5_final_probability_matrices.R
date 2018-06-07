@@ -76,30 +76,3 @@ Pij <- map(Pij, scalexy, min = 0.01, max = 0.99)
 # niche, neutral, and forbidden links
 saveRDS(Pij, "data/AMD_final_probability_matrices.RDS")
 
-
-
-
-
-
-b_trial <- function (prob_matr, trials){
-  out <- NULL
-  for (i in 1:trials){
-    out[[i]] <- matrix(rbinom(length(prob_matr),
-                       1, prob = prob_matr),
-                       ncol = ncol(prob_matr),
-                       nrow = nrow(prob_matr))
-  }
-  out
-}
-
-# b.trials <- map(Pij, b_trial, trials = 100)
-# 
-# saveRDS(b.trials,
-#         paste("data/100 bernouli trials ",
-#               Sys.Date(),
-#               ".rds",
-#               sep = ""))
-
-
-b.trials <- map(Pij, b_trial, trials = 500)
-saveRDS(b.trials, "data/500 bernouli trials.rds")
