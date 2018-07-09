@@ -65,3 +65,25 @@ get_mij <- function(A, aij, xi){
   }
   return(mij)
 }
+
+nest <- function(A){
+  nij = sum(A[upper.tri(A, diag = FALSE)])
+  row.sum = rowSums(A)
+  col.sum = colSums(A)
+  denominator.vector = c()
+  for(i in 1:length(row.sum)){
+    for(j in 1:length(col.sum)){
+      if(i <j){
+        ni = row.sum[i]
+        nj = col.sum[j]
+        denominator.vector[i] = min(ni, nj)
+      }
+    }
+  }
+  denominator = sum(denominator.vector, na.rm = TRUE)
+  result = nij / denominator
+  if(result > 1){
+    result = 1
+  }
+  return(result)
+}

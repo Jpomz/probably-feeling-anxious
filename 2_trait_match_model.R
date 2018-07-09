@@ -1,4 +1,4 @@
-# 1_link_probability
+# 2_trait_match_model
 # 9 feb 2018
 #J Pomz
 # jfpomeranz@gmail.com

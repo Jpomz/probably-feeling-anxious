@@ -1,4 +1,4 @@
-# 4_P.niche_x_N
+# 5_final_probability_matrices
 
 # estimate link probability by multiplying niche probability (P.niche) and neutral probability (N)
 # also prune niche forbidden links
@@ -75,4 +75,3 @@ Pij <- map(Pij, scalexy, min = 0.01, max = 0.99)
 # save final probabilities which account for
 # niche, neutral, and forbidden links
 saveRDS(Pij, "data/AMD_final_probability_matrices.RDS")
-

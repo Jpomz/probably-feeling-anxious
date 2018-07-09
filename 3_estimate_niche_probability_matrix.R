@@ -36,25 +36,25 @@ link.probs <- llply(M, function (x){
                      replicates = 1)
 })
 
-# plot link probabilities for illustration
-mybreaks <- seq(0,1,0.1)
-for (i in 1:length(link.probs)){
-  heatmap.2(matrix(link.probs[[i]][[1]],
-                   length(dataset[[i]]$avg.dw),
-                   length(dataset[[i]]$avg.dw)),
-            Rowv = NA,
-            Colv = NA,
-            scale = "none",
-            trace = "none",
-            dendrogram = "none",
-            breaks = mybreaks,
-            key = F,
-            labRow = NA,
-            labCol = NA,
-            main= "Probability of interaction",
-            xlab = "Consumer",
-            ylab = "Resource")
-}
+# # plot link probabilities for illustration
+# mybreaks <- seq(0,1,0.1)
+# for (i in 1:length(link.probs)){
+#   heatmap.2(matrix(link.probs[[i]][[1]],
+#                    length(dataset[[i]]$avg.dw),
+#                    length(dataset[[i]]$avg.dw)),
+#             Rowv = NA,
+#             Colv = NA,
+#             scale = "none",
+#             trace = "none",
+#             dendrogram = "none",
+#             breaks = mybreaks,
+#             key = F,
+#             labRow = NA,
+#             labCol = NA,
+#             main= "Probability of interaction",
+#             xlab = "Consumer",
+#             ylab = "Resource")
+# }
 
 # probability matrix ####
 # link.probs[[i]][[1]] == vector of link probabilities

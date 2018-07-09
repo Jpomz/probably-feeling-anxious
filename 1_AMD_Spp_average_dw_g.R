@@ -45,4 +45,9 @@ dataset <- full.data %>%
          rel.ab = density / tot.ab) %>%
   ungroup()
 
+rm.taxa <- c("Acari", "Copepoda", "Elmidae Adult", "Platyhelminthes", "Diptera", "Paraleptamphopus", "Ostracoda")
+
+dataset <- dataset %>% 
+  filter(!(taxa %in% rm.taxa))
+
 saveRDS(dataset, "data/AMD_fish_invert_dw_abundance.RDS")

@@ -45,6 +45,10 @@ dat <- split(taxa.dat, list(taxa.dat$site))
 # for reproducibility
 set.seed(3049)
 
+# remove portal site bc only has one taxa
+Pij[[21]] <- NULL
+dat[[21]] <- NULL
+
 results <- map2(Pij, dat, get_measures, trials = 500)
 results <- map(results, ldply)
 results <- ldply(results)
