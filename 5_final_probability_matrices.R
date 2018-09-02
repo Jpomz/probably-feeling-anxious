@@ -13,23 +13,23 @@ library(plyr)
 library(tidyverse)
 library(gplots)
 
-# # function to plot heat map 
-# # just using this for data exploration
-# plot_heat <- function(x, ...){
-#   heatmap.2(x,
-#             Rowv = NA,
-#             Colv = NA,
-#             scale = "none",
-#             trace = "none",
-#             dendrogram = "none",
-#             breaks = seq(0,1,0.01),
-#             key = F,
-#             labRow = NA,
-#             labCol = NA,
-#             main= "Probability of interaction",
-#             xlab = "Consumer",
-#             ylab = "Resource")
-# }
+# function to plot heat map
+# just using this for data exploration
+plot_heat <- function(x, ...){
+  heatmap.2(x,
+            Rowv = NA,
+            Colv = NA,
+            scale = "none",
+            trace = "none",
+            dendrogram = "none",
+            breaks = seq(0,1,0.01),
+            key = F,
+            labRow = NA,
+            labCol = NA,
+            main= "Probability of interaction",
+            xlab = "Consumer",
+            ylab = "Resource")
+}
 
 # function to set probabilities of forbidden taxa to 0
 rm_niche <- function(matrix, taxa){
@@ -55,7 +55,11 @@ N <- readRDS("data/AMD_relative_abundance_matrices.RDS")
 # "forbidden" taxa based on morphology
 # e.g. "brushing/scraping" mouthparts, 
 # specialized filtering, Austrosimulium's cephalic fan
-taxa.forbid <- c("Acari", "Austroclima", "Austrosimulium", "Blephariceridae", "Coloburiscus", "Copepoda", "Deleatidium", "Elmidae", "Elmidae Adult", "Eriopterini", "Helicopsyche", "Hexatomini", "Hydraenidae", "Hydrophilidae", "Nesameletus","Oligochaetae", "Olinga","Ostracoda", "Oxyethira", "Paraleptamphopus", "Platyhelminthes", "Potamopyrgus", "Rakiura", "Scirtidae", "Spaniocerca", "Spaniocercoides", "Zelandobius", "Zelolessica", "Zephlebia")
+taxa.forbid <- c("Acari", "Austroclima", "Austrosimulium", "Blephariceridae", "Coloburiscus", "Copepoda", "Deleatidium", "Elmidae", "Elmidae Adult", "Helicopsyche", "Hydraenidae", "Nesameletus","Oligochaetae", "Olinga","Ostracoda", "Oxyethira", "Paraleptamphopus", "Potamopyrgus", "Rakiura", "Scirtidae", "Spaniocerca", "Spaniocercoides", "Zelandobius", "Zelolessica", "Zephlebia")
+# write taxa forbid as table for MS
+data.frame(Taxa = taxa.forbid) %>%
+  write.csv("figures/Niche_forbid_taxa.csv",
+            row.names = FALSE)
 
 # set forbidden taxa columns = 0
 P.niche <- map(P.niche,
@@ -68,9 +72,9 @@ Pij <- map2(P.niche, N, ~.x*.y)
 # rescale probabilities between 0 and 1
 Pij <- map(Pij, scalexy, min = 0.01, max = 0.99)
 
-#map(Pij, plot_heat)
-#map(Pij, hist)
-#map(Pij, mean)
+# map(Pij, plot_heat)
+# #map(Pij, hist)
+# map(Pij, mean)
 
 # save final probabilities which account for
 # niche, neutral, and forbidden links

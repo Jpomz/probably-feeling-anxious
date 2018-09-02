@@ -25,9 +25,14 @@ get_measures <- function(matr, dat, trials = 1){
     xistar <- get_xistar(N = dat$density, M = dat$avg.dw)
     aij <- get_aij(xistar)
     mij <- get_mij(A = A, aij = aij, xi = xistar)
-    eig <- Re(eigen(mij)$values[1])
+    #diag(mij) <- -1
+    eig <- Re(eigen(mij)$values)[1]
+    #eig <- max(Re(eigen(mij)$values))
+    return.time = -1 / eig
     fw_meas <- Get.web.stats(A)
-    result[[i]] <- c(dom.eig = eig, fw_meas) 
+    result[[i]] <- c(dom.eig = eig,
+                     #return.time = return.time,
+                     fw_meas) 
   }
   return(result)
 }
@@ -49,7 +54,7 @@ set.seed(3049)
 Pij[[21]] <- NULL
 dat[[21]] <- NULL
 
-results <- map2(Pij, dat, get_measures, trials = 500)
+results <- map2(Pij, dat, get_measures, trials = 50)
 results <- map(results, ldply)
 results <- ldply(results)
 gradient <- readRDS("data/pca_axis_26_sites.RDS")

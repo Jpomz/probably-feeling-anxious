@@ -66,24 +66,103 @@ get_mij <- function(A, aij, xi){
   return(mij)
 }
 
-nest <- function(A){
-  nij = sum(A[upper.tri(A, diag = FALSE)])
-  row.sum = rowSums(A)
-  col.sum = colSums(A)
-  denominator.vector = c()
-  for(i in 1:length(row.sum)){
-    for(j in 1:length(col.sum)){
-      if(i <j){
-        ni = row.sum[i]
-        nj = col.sum[j]
-        denominator.vector[i] = min(ni, nj)
+
+
+scale.Jij <- function(J){
+  # J is a Jacobian matrix where elements Jij = interaction strength
+  # e.g. object from jacobian_binary()
+  element.rank <- rank(1:nrow(J)) / nrow(J)
+  scale.rank <- scalexy(element.rank, min = 0.25, max = 1.25)
+  scale.grid <- expand.grid(rev(scale.rank), scale.rank)
+  scale.vector <- scale.grid$Var1 * scale.grid$Var2
+  scale.matrix <- matrix(scale.vector, nrow = nrow(J), ncol = ncol(J))
+  u.tri <- which(upper.tri(scale.matrix, diag = FALSE),
+                 arr.ind = TRUE)
+  l.tri <- cbind(u.tri[,2], u.tri[,1])
+  scale.matrix[l.tri] = scale.matrix[u.tri]
+  scale.J <- scale.matrix * J
+  return(scale.J)
+}
+
+scalexy <- function(x, min, max){
+  ((max - min) / (max(x) - min(x))) *
+    (x - min(x)) + min
+}
+
+correlate.Jij <- function(J){
+  # J is a JAcobian matrix where elements Jij = interaction strength
+  # e.g. object from jacobian_binary()
+  negative.index <- which(J < 0, arr.ind = TRUE)
+  positive.index <- cbind(negative.index[,2], negative.index[,1])
+  positive.strength <- abs(J[negative.index] * 0.7)
+    #runif(n = nrow(negative.index), min = 0.6, max = 0.8))
+  # 0.7 comes from Montoya et al. 2009
+  J[positive.index] <- positive.strength
+  return(J)
+}
+
+
+
+rm_cycle <- function(A, diag = TRUE){
+  # if A eats B and B eats A, randomly remove one link
+  # Default removes diagonal
+  # to leave diagonal as is set diag = FALSE
+  for(i in 1:nrow(A)){
+  for(j in 1:ncol(A)){
+    if(diag == FALSE){
+      if(i == j){
+        next
+      }
+    }
+    if(A[i,j] == 1 & A[j,i] == 1){
+      if(runif(1) < 0.5){
+        A[i,j] <-  0
+      }
+      else{
+        A[j,i] <- 0
       }
     }
   }
-  denominator = sum(denominator.vector, na.rm = TRUE)
-  result = nij / denominator
-  if(result > 1){
-    result = 1
-  }
-  return(result)
+}
+  return(A)
+}
+
+
+fwpointrange <- function(data, y, x = "pca1", ylab = NULL){
+  ggplot(data, aes(x = data[[x]], y = data[[y]])) +
+    stat_summary(fun.y = mean,
+                 fun.ymin = function(x) mean(x) - sd(x),
+                 fun.ymax = function(x) mean(x) + sd(x),
+                 geom = "pointrange") +
+    theme_bw() +
+    theme(axis.title = element_text(size = 20)) +
+    if (is.null(ylab))
+      labs(x = "Mining gradient", y = y) 
+  else
+    labs(x = "Mining gradient", y = ylab) 
+}
+
+joy.stability <- function(data, x = "stab",
+                          xmin = -.09, xmax = 0.5,
+                          title = NULL, scale = NULL,
+                          bandwidth = NULL,
+                          rel_min_height = NULL){
+  require(ggridges)
+  require(forcats)
+  require(ggplot2)
+  ggplot(data, aes(x = data[[x]],
+                   y = fct_reorder(.id, pca1),
+                   height = ..density.., 
+                   fill = pca1)) +
+    stat_density_ridges(scale = scale, rel_min_height = rel_min_height,
+                        bandwidth = bandwidth, alpha = 0.8) +
+    theme_ridges(center_axis_labels = TRUE) +
+    labs(y = "mining gradient", x = "stability") +
+    scale_fill_distiller(palette = "Spectral") +
+    theme(legend.position = "NULL")+
+    coord_cartesian(xlim = c(xmin, xmax)) +
+    if (is.null(title))
+      labs(title = NULL) 
+  else
+    labs(title = title)
 }

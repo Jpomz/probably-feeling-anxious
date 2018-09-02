@@ -46,7 +46,7 @@ dat <- dat[with(dat, order(dat$avg.dw)),]
 # split into list by site
 dat.list <- split(dat, list(dat$site))
 
-# 1) realtive abundace ####
+# 1) relative abundance ####
 # calculate relative abundance matrices
 rel.ab <- llply(dat.list, function (x){
   get_rel_ab(vec = x$rel.ab, taxa = x$taxa)
