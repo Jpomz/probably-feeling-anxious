@@ -9,32 +9,13 @@ library(forcats)
 library(gplots)
 
 # food web functions from Petchey
-source("FoodWebFunctions.r")
-# functions
-source("6a_functions.R")
-source("stability_fxns_Sauve.R")
-
-# function to get fw_measures and dominant eigenvalue
-get_measures <- function(matr, s2,
-                         trials = 1,
-                         scale.Jij = FALSE,
-                         correlate.Jij = FALSE){
-  result <- list()
-  for(i in 1:trials){
-    A <- rm_cycle(b_trial(matr))
-    J <- jacobian_binary(A)
-    if(scale.Jij == TRUE){
-      J = scale.Jij(J)
-    }
-    if(correlate.Jij == TRUE){
-      J = correlate.Jij(J)
-    }
-    stab = stability(J, s2 = s2)
-    fw_meas <- Get.web.stats(A)
-    result[[i]] <- c(stab = stab, fw_meas) 
-  }
-  return(result)
-}
+source("functions/FoodWebFunctions.r")
+# functions written for this MS
+source("functions/MS_functions.R")
+# stability functions from Sauve 2016
+# if using, please cite original publication:
+# Sauve, A. M. C., Thébault, E., Pocock, M. J. O., & Fontaine, C. (2016). How plants connect pollination and herbivory networks and their contribution to community stability. Ecology, 97(4), 908-917. doi.org/10.1890/15-0132.1
+source("functions/stability_fxns_Sauve.R")
 
 # joy.stability <- function(data, x = "stab", xmin = -.09, xmax = 0.5,
 #                           title = NULL, scale = NULL,
@@ -159,92 +140,92 @@ saveRDS(stability.results, "data/stability_results.RDS")
 
 
 # below this is trash? ####
-
-
-get_Jij <- function(matr, trials = 1, scale.Jij = FALSE, 
-            correlate.Jij = FALSE, plot = FALSE, 
-            density = FALSE, ...){
-  result <- list()
-  for(i in 1:trials){
-    A <- b_trial(matr)
-    A <- rm_cycle(A)
-    low.tri <- sum(A[lower.tri(A)])
-    prop.low.tri <- low.tri / sum(A)
-    J <- jacobian_binary(A)
-    result[[i]] <- data.frame(sum = low.tri,
-                              percent = prop.low.tri)
-    if(scale.Jij == TRUE){
-      J = scale.Jij(J)
-    }
-    if(correlate.Jij == TRUE){
-      J = correlate.Jij(J)
-    }
-    if(density == TRUE){
-      interactions = J[J!=0]
-      plot(density(interactions))
-    }
-    if(plot == TRUE){
-    heatmap.2(J, 
-              Rowv = NA, Colv = NA, scale = "none",
-              trace = "none",
-              dendrogram = "none", key = F, labRow = NA,
-              labCol = NA)
-    }
-  }
-  return(result)
-}
-# manually scale colors
-# col = colorpanel(n = 50, low = "blue", mid = "beige", high = "red")
-A <- rm_cycle(b_trial(Pij$Lankey))
-heatmap.2(A, 
-          Rowv = NA, Colv = NA, scale = "none",
-          trace = "none",
-          dendrogram = "none", key = F, labRow = NA,
-          labCol = NA)
-J <- jacobian_binary(A)
-heatmap.2(correlate.Jij(scale.Jij(J)), 
-          Rowv = NA, Colv = NA, scale = "none",
-          trace = "none",
-          dendrogram = "none", key = F, labRow = NA,
-          labCol = NA)
-
-set.seed(3049)
-low <- map(Pij, get_Jij, trials = 250, rm_cycle = TRUE)
-low <- map(low, ldply)
-low <- ldply(low)
-
-ggplot(low, aes(y = percent, x = .id))+
-  geom_point() +
-  coord_cartesian(ylim = c(0, 0.6))
-
-# heatmap.2(Pij[[1]], 
-#   Rowv = NA, Colv = NA, scale = "none", trace = "none",
-#   dendrogram = "none", key = F, labRow = NA,
-#   labCol = NA)
-
-
-
-
-lm.list <- map(stability.results, ~lm(stab~pca1, data = .x))
-
-lm.list %>%
-  map(~summary(.x))
-
-stability.results %>%
-  map(~lm(log10(stab + 1.1)~pca1, data = .x)) %>%
-  map(~summary(.x))
-
-
-x <- seq(1e-6, 1e-5, length.out = 100)
-expand.grid(x,x) %>% 
-  filter( Var1 > Var2) %>% 
-  mutate(aij = (Var1 / Var2)**0.75) %>% 
-  plot(aij ~ Var1, data = .)
-
-
-# plots for powerpoint outline
-heatmap.2(J, 
-          Rowv = NA, Colv = NA, scale = "none",
-          trace = "none",
-          dendrogram = "none", key = F, labRow = NA,
-          labCol = NA, col = colorpanel(n = 50, low ="turquoise1" , mid = "lavenderblush", high = "red"))
+# 
+# 
+# get_Jij <- function(matr, trials = 1, scale.Jij = FALSE, 
+#             correlate.Jij = FALSE, plot = FALSE, 
+#             density = FALSE, ...){
+#   result <- list()
+#   for(i in 1:trials){
+#     A <- b_trial(matr)
+#     A <- rm_cycle(A)
+#     low.tri <- sum(A[lower.tri(A)])
+#     prop.low.tri <- low.tri / sum(A)
+#     J <- jacobian_binary(A)
+#     result[[i]] <- data.frame(sum = low.tri,
+#                               percent = prop.low.tri)
+#     if(scale.Jij == TRUE){
+#       J = scale.Jij(J)
+#     }
+#     if(correlate.Jij == TRUE){
+#       J = correlate.Jij(J)
+#     }
+#     if(density == TRUE){
+#       interactions = J[J!=0]
+#       plot(density(interactions))
+#     }
+#     if(plot == TRUE){
+#     heatmap.2(J, 
+#               Rowv = NA, Colv = NA, scale = "none",
+#               trace = "none",
+#               dendrogram = "none", key = F, labRow = NA,
+#               labCol = NA)
+#     }
+#   }
+#   return(result)
+# }
+# # manually scale colors
+# # col = colorpanel(n = 50, low = "blue", mid = "beige", high = "red")
+# A <- rm_cycle(b_trial(Pij$Lankey))
+# heatmap.2(A, 
+#           Rowv = NA, Colv = NA, scale = "none",
+#           trace = "none",
+#           dendrogram = "none", key = F, labRow = NA,
+#           labCol = NA)
+# J <- jacobian_binary(A)
+# heatmap.2(correlate.Jij(scale.Jij(J)), 
+#           Rowv = NA, Colv = NA, scale = "none",
+#           trace = "none",
+#           dendrogram = "none", key = F, labRow = NA,
+#           labCol = NA)
+# 
+# set.seed(3049)
+# low <- map(Pij, get_Jij, trials = 250, rm_cycle = TRUE)
+# low <- map(low, ldply)
+# low <- ldply(low)
+# 
+# ggplot(low, aes(y = percent, x = .id))+
+#   geom_point() +
+#   coord_cartesian(ylim = c(0, 0.6))
+# 
+# # heatmap.2(Pij[[1]], 
+# #   Rowv = NA, Colv = NA, scale = "none", trace = "none",
+# #   dendrogram = "none", key = F, labRow = NA,
+# #   labCol = NA)
+# 
+# 
+# 
+# 
+# lm.list <- map(stability.results, ~lm(stab~pca1, data = .x))
+# 
+# lm.list %>%
+#   map(~summary(.x))
+# 
+# stability.results %>%
+#   map(~lm(log10(stab + 1.1)~pca1, data = .x)) %>%
+#   map(~summary(.x))
+# 
+# 
+# x <- seq(1e-6, 1e-5, length.out = 100)
+# expand.grid(x,x) %>% 
+#   filter( Var1 > Var2) %>% 
+#   mutate(aij = (Var1 / Var2)**0.75) %>% 
+#   plot(aij ~ Var1, data = .)
+# 
+# 
+# # plots for powerpoint outline
+# heatmap.2(J, 
+#           Rowv = NA, Colv = NA, scale = "none",
+#           trace = "none",
+#           dendrogram = "none", key = F, labRow = NA,
+#           labCol = NA, col = colorpanel(n = 50, low ="turquoise1" , mid = "lavenderblush", high = "red"))

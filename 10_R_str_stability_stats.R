@@ -33,7 +33,7 @@ dat$random %>%
   lmrob(stab~S, data = .) %>%
   summary()
 
-fig_fun <- function(data, mainlab,
+fig_fun2 <- function(data, mainlab,
                     x = "S", y = "stab"){
   ggplot(data, aes(x = data[[x]], y = data[[y]])) +
     geom_point()+
@@ -48,8 +48,8 @@ fig_fun <- function(data, mainlab,
                  #formula = y~x+I(x^2),
                 color = "black") 
 }
-fig_fun(data = dat$random, mainlab = "Random structure and interaction strength")
-ggsave("figures/s~R_str_R_strenth.png")
+fig_fun2(data = dat$random, mainlab = "Random structure and interaction strength")
+ggsave("figures/fig_4.png")
 
-dat %>%
-  map(~fig_fun(data = .x, mainlab = paste(.x[1,1])))
+# dat %>%
+#   map(~fig_fun(data = .x, mainlab = paste(.x[1,1])))

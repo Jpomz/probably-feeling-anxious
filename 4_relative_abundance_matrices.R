@@ -10,34 +10,8 @@
 library(plyr)
 library(purrr)
 
-# function to calculate relative abundance matrices
-get_rel_ab <- function(vec, taxa){
-  stopifnot(length(vec) == length(taxa))
-  rel.ab <- vec / sum(vec)
-  Nij <- matrix(0, length(vec), length(vec))
-  for (i in 1:length(vec)){
-    for (j in 1:length(vec)){
-      Nij[i,j] <- rel.ab[i]*rel.ab[j]
-    }
-  }
-  dimnames(Nij) <- list(taxa, taxa)
-  Nij
-}
-
-# function to correct fish relative abundances
-correct_fish_rel_ab <- function(matr, fish, cf = 10^3){
-  if(any(fish %in% colnames(matr))){
-    fish.cols <- which(colnames(matr) %in% fish)
-    matr[,fish.cols] <- matr[,fish.cols] * cf
-  }
-  matr
-}
-
-# function to rescale variable to [min, max]
-scalexy <- function(x, min, max){
-  ((max - min) / (max(x) - min(x))) *
-    (x - min(x)) + min
-}
+# functions written for this MS
+source("functions/MS_functions.R")
 
 # read in data
 dat <- readRDS("data/AMD_fish_invert_dw_abundance.RDS")

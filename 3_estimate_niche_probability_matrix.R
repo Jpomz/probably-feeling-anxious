@@ -12,8 +12,11 @@ library(traitmatch)
 library(gplots)
 library(purrr)
 # function from Bartomeus
-source("predict.niche.prob.R")
+source("functions/predict.niche.prob.R")
+source("functions/MS_functions.R")
 
+# model paramaters calculated using individual level data from Woodward et al. 2010. 
+# for access to data for Broadstone Stream and Tadnoll Brook, please contact Guy Woodward and Iwan Jones, respectively
 pars_pre <- readRDS("data/Integrated_model_params.RDS")
 
 # AMD data ####
@@ -62,10 +65,7 @@ link.probs <- llply(M, function (x){
 prob.vec <- lapply(link.probs, "[[", 1)
 # convert vector to a matrix. Vector is organized by dw
 # as long as use the right ncol/nrow argument, matrix will be size sorted (e.g. typical predation matrix)
-# function to convert to matrix
-get_prob_matr <- function(vec){
-  m = matrix(vec, sqrt(length(vec)), sqrt(length(vec)))
-}
+
 # convert all vectors to matrices
 prob.matr <- map(prob.vec, get_prob_matr)
 # add dimnames to matrices

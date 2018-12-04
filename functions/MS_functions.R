@@ -25,49 +25,91 @@ rm_low_tri <- function(adjacency){
   adjacency[lower.tri(adjacency, diag = TRUE)] <- 0
   adjacency
 }
-# function to estimate equilibrium biomass 
-get_xistar <- function(N, M){
-  (M / 1000) * N
+
+
+# function to convert to probability vector (vec) to probability matrix
+get_prob_matr <- function(vec){
+  m = matrix(vec, sqrt(length(vec)), sqrt(length(vec)))
 }
-# function to calculate search rate (aij)
-# sensu tang et al. 2014
-# add variability here?
-get_aij <- function (xi, a0 = -3.50){
-  xi.pairs = expand.grid(xi, xi)
-  resource = xi.pairs[,1]
-  consumer = xi.pairs[,2]
-  bi = rnorm(1, -0.15, 0.05**2)
-  kij = resource / consumer
-  aij = 10^a0 * consumer^bi *
-    (kij^0.46 / (1 + kij^2))
-  aij = matrix(aij,
-               nrow = length(xi),
-               ncol = length(xi))
-  return(aij)
-}
-# function to calculate conversion efficiency
-# random number [0.4, 0.6], uniform distribution
-eij <- function (n=1){
-  runif(n, min = 0.4, max = 0.6)
-}
-# calculate mij (e.g. Jacobian matrix)
-# each element is interaction strength
-# upper triangle = negative (e.g. effect of pred on prey)
-# lower triangle = positive (e.g. effect of prey on pred)
-get_mij <- function(A, aij, xi){
-  A.index = which(A > 0, arr.ind = TRUE)
-  mij <- matrix(0, nrow = nrow(A), ncol = ncol(A))
-  for (i in 1:nrow(A.index)){
-    mij[A.index[i,1], A.index[i,2]] = -aij[A.index[i,1], A.index[i,2]] *
-      xi[A.index[i,1]]
-    mij[A.index[i,2],A.index[i,1]] =eij() * 
-      aij[A.index[i,1], A.index[i,2]] * xi[A.index[i,1]]
+
+# function to calculate relative abundance matrices
+get_rel_ab <- function(vec, taxa){
+  stopifnot(length(vec) == length(taxa))
+  rel.ab <- vec / sum(vec)
+  Nij <- matrix(0, length(vec), length(vec))
+  for (i in 1:length(vec)){
+    for (j in 1:length(vec)){
+      Nij[i,j] <- rel.ab[i]*rel.ab[j]
+    }
   }
-  return(mij)
+  dimnames(Nij) <- list(taxa, taxa)
+  Nij
 }
 
+# function to correct fish relative abundances
+correct_fish_rel_ab <- function(matr, fish, cf = 10^3){
+  if(any(fish %in% colnames(matr))){
+    fish.cols <- which(colnames(matr) %in% fish)
+    matr[,fish.cols] <- matr[,fish.cols] * cf
+  }
+  matr
+}
 
+# function to rescale variable x to [min, max]
+scalexy <- function(x, min, max){
+  ((max - min) / (max(x) - min(x))) *
+    (x - min(x)) + min
+}
 
+# function to plot heat map
+# just using this for data exploration
+plot_heat <- function(x, ...){
+  heatmap.2(x,
+            Rowv = NA,
+            Colv = NA,
+            scale = "none",
+            trace = "none",
+            dendrogram = "none",
+            breaks = seq(0,1,0.01),
+            key = F,
+            labRow = NA,
+            labCol = NA,
+            main= "Probability of interaction",
+            xlab = "Consumer",
+            ylab = "Resource")
+}
+
+# function to set probabilities of forbidden taxa to 0
+rm_niche <- function(matrix, taxa){
+  for(name in (colnames(matrix)[colnames(matrix) %in% taxa])){
+    matrix[,name] <- 0
+  }
+  matrix
+}
+
+# function to get fw_measures and dominant eigenvalue
+get_measures <- function(matr, s2,
+                         trials = 1,
+                         scale.Jij = FALSE,
+                         correlate.Jij = FALSE){
+  result <- list()
+  for(i in 1:trials){
+    A <- rm_cycle(b_trial(matr))
+    J <- jacobian_binary(A)
+    if(scale.Jij == TRUE){
+      J = scale.Jij(J)
+    }
+    if(correlate.Jij == TRUE){
+      J = correlate.Jij(J)
+    }
+    stab = stability(J, s2 = s2)
+    fw_meas <- Get.web.stats(A)
+    result[[i]] <- c(stab = stab, fw_meas) 
+  }
+  return(result)
+}
+
+# function to scale interaction strengths by body size
 scale.Jij <- function(J){
   # J is a Jacobian matrix where elements Jij = interaction strength
   # e.g. object from jacobian_binary()
@@ -127,7 +169,43 @@ rm_cycle <- function(A, diag = TRUE){
   return(A)
 }
 
+# function to construct food webs with given number of species (S) and connectance (C)
+random_A <- function(S, C, ...){
+  A <- 0
+  while(sum(A) == 0){
+    A <- matrix(rbinom(n = S^2, prob = C, size = 1), S, S)
+    diag(A) <- 0
+    rm_cycle(A)
+  }
+  return(A)
+}
 
+# function to get fw_measures and dominant eigenvalue for food webs with random structure
+get_random_measures <- function(S,
+                                C,
+                                s2,
+                                trials = 1,
+                                scale.Jij = FALSE,
+                                correlate.Jij = FALSE){
+  result <- list()
+  for(i in 1:trials){
+    A <- random_A(S, C)
+    J <- jacobian_binary(A)
+    if(scale.Jij == TRUE){
+      J = scale.Jij(J)
+    }
+    if(correlate.Jij == TRUE){
+      J = correlate.Jij(J)
+    }
+    stab = stability(J, s2 = s2)
+    fw_meas <- Get.web.stats(A)
+    result[[i]] <- c(stab = stab, fw_meas) 
+  }
+  return(result)
+}
+
+
+# below this is trash?
 fwpointrange <- function(data, y, x = "pca1", ylab = NULL){
   ggplot(data, aes(x = data[[x]], y = data[[y]])) +
     stat_summary(fun.y = mean,

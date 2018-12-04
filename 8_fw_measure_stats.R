@@ -107,6 +107,7 @@ summary(Gen.mod)
 
 
 # figures ####
+# custom function for figures in MS
 fig_fun <- function(y,ylab,
                     quad = TRUE,
                     data = dat, x = "pca1",
@@ -141,7 +142,7 @@ fig_fun <- function(y,ylab,
 }
 
 # fig 1A-C ####
-ggplot(S.dat, aes(x = -pca1, y = S)) +
+S.fig <- ggplot(S.dat, aes(x = -pca1, y = S)) +
   geom_point(aes(color = fct_reorder(Site, pca1)))+
   theme_bw()+
   theme(legend.position = "none")+
@@ -151,7 +152,7 @@ ggplot(S.dat, aes(x = -pca1, y = S)) +
               formula = y~x+I(x^2),
               color = "black") +
     annotate(geom = "text", x = -5.6, y = 33,
-             label = "A", size = 6))
+             label = "A", size = 6)
 
 #ggsave("figures/S~gradient.png")
 L.fig <- fig_fun(y = "L", ylab = "No. Links",
@@ -165,7 +166,7 @@ C.fig <- fig_fun(y = "C", ylab = "Connectance") +
            label = "C", size = 6)
 #ggsave("figures/C~gradient.png")
 
-tiff(filename = "figures/fig_1.tiff",
+png(filename = "figures/fig_1.png",
      width = 190, height = 210, units = "mm", res =300)
 grid.arrange(S.fig, L.fig, C.fig, ncol = 1)
 dev.off()
@@ -176,7 +177,7 @@ fig_fun(y = "B", ylab = "Prop. Basal",
         linecolor = "red")
 #ggsave("figures/B~gradient.png")
 
-# fig 2 A-D
+# fig 2 A-D ####
 I.fig <- fig_fun(y = "I", ylab = "Prop. Intermediate") +
   annotate(geom = "text", x = -5.6, y = 0.9,
            label = "A", size = 6)
@@ -195,7 +196,7 @@ G.fig <- fig_fun(y = "Gensd", ylab = "Gen SD",
   annotate(geom = "text", x = -5.6, y = 0.17,
            label = "D", size = 6)
 
-tiff(filename = "figures/fig_2.tiff",
+png(filename = "figures/fig_2.png",
      width = 190, height = 190, units = "mm", res =300)
 grid.arrange(I.fig, T.fig, V.fig, G.fig, ncol = 2)
 dev.off()

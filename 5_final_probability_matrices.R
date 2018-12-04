@@ -13,37 +13,8 @@ library(plyr)
 library(tidyverse)
 library(gplots)
 
-# function to plot heat map
-# just using this for data exploration
-plot_heat <- function(x, ...){
-  heatmap.2(x,
-            Rowv = NA,
-            Colv = NA,
-            scale = "none",
-            trace = "none",
-            dendrogram = "none",
-            breaks = seq(0,1,0.01),
-            key = F,
-            labRow = NA,
-            labCol = NA,
-            main= "Probability of interaction",
-            xlab = "Consumer",
-            ylab = "Resource")
-}
-
-# function to set probabilities of forbidden taxa to 0
-rm_niche <- function(matrix, taxa){
-  for(name in (colnames(matrix)[colnames(matrix) %in% taxa])){
-    matrix[,name] <- 0
-  }
-  matrix
-}
-
-# function to rescale variable to [min, max]
-scalexy <- function(x, min, max){
-  ((max - min) / (max(x) - min(x))) *
-    (x - min(x)) + min
-}
+# functions written for this MS
+source("functions/MS_functions.R")
 
 # data ####
 # read in link probabilities (P.niche)
