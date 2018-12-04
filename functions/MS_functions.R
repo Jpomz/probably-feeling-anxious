@@ -76,10 +76,10 @@ scale.Jij <- function(J){
   scale.grid <- expand.grid(rev(scale.rank), scale.rank)
   scale.vector <- scale.grid$Var1 * scale.grid$Var2
   scale.matrix <- matrix(scale.vector, nrow = nrow(J), ncol = ncol(J))
-  u.tri <- which(upper.tri(scale.matrix, diag = FALSE),
-                 arr.ind = TRUE)
-  l.tri <- cbind(u.tri[,2], u.tri[,1])
-  scale.matrix[l.tri] = scale.matrix[u.tri]
+  #u.tri <- which(upper.tri(scale.matrix, diag = FALSE),
+  #               arr.ind = TRUE)
+  #l.tri <- cbind(u.tri[,2], u.tri[,1])
+  #scale.matrix[l.tri] = scale.matrix[u.tri]
   scale.J <- scale.matrix * J
   return(scale.J)
 }

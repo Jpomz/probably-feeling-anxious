@@ -26,12 +26,6 @@ random_A <- function(S, C, ...){
   return(A)
 }
 
-# test_function <- function(x, y){
-#   A <- (x + y) / y
-#   A
-# }
-
-
 # function to get fw_measures and dominant eigenvalue
 get_random_measures <- function(S,
                                 C,
@@ -56,7 +50,6 @@ get_random_measures <- function(S,
   return(result)
 }
 
-# test <- get_random_measures(S = S, C = C, trials = 1, s2 = 1)
 # random structure and strength ####
 set.seed(3049)
 r_structure_r_strength <- map2(S, C,
@@ -108,6 +101,7 @@ rand.stab.results <- list(
 rand.stab.results <- ldply(rand.stab.results)
 saveRDS(rand.stab.results, "data/random_network_stability_results.RDS")
 
+# scratch below ####
 
 ggplot(r_structure_r_strength, aes(y = stab, x = S)) +
   geom_point()+

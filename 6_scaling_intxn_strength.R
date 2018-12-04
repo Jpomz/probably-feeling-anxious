@@ -1,5 +1,4 @@
-# scale interaction strengths based on row and column ranks
-
+# Different interaction strength estimates
 # libraries
 library(plyr)
 library(dplyr)
@@ -37,26 +36,26 @@ get_measures <- function(matr, s2,
   return(result)
 }
 
-joy.stability <- function(data, x = "stab", xmin = -.09, xmax = 0.5,
-                          title = NULL, scale = NULL,
-                          bandwidth = NULL,
-                          rel_min_height = NULL){
-  ggplot(data, aes(x = data[[x]],
-                   y = fct_reorder(.id, pca1),
-                   height = ..density.., 
-                   fill = pca1)) +
-    stat_density_ridges(scale = scale, rel_min_height = rel_min_height,
-                        bandwidth = bandwidth, alpha = 0.8) +
-    theme_ridges(center_axis_labels = TRUE) +
-    labs(y = "mining gradient", x = "stability") +
-    scale_fill_distiller(palette = "Spectral") +
-    theme(legend.position = "NULL")+
-    coord_cartesian(xlim = c(xmin, xmax)) +
-    if (is.null(title))
-      labs(title = NULL) 
-  else
-    labs(title = title)
-}
+# joy.stability <- function(data, x = "stab", xmin = -.09, xmax = 0.5,
+#                           title = NULL, scale = NULL,
+#                           bandwidth = NULL,
+#                           rel_min_height = NULL){
+#   ggplot(data, aes(x = data[[x]],
+#                    y = fct_reorder(.id, pca1),
+#                    height = ..density.., 
+#                    fill = pca1)) +
+#     stat_density_ridges(scale = scale, rel_min_height = rel_min_height,
+#                         bandwidth = bandwidth, alpha = 0.8) +
+#     theme_ridges(center_axis_labels = TRUE) +
+#     labs(y = "mining gradient", x = "stability") +
+#     scale_fill_distiller(palette = "Spectral") +
+#     theme(legend.position = "NULL")+
+#     coord_cartesian(xlim = c(xmin, xmax)) +
+#     if (is.null(title))
+#       labs(title = NULL) 
+#   else
+#     labs(title = title)
+# }
 
 # read in data
 # probabilty matrices
@@ -64,7 +63,7 @@ Pij <- readRDS("data/AMD_final_probability_matrices.RDS")
 # remove portal site bc only has one taxa
 Pij$Portal <- NULL
 
-# random interaction strengths
+# random interaction strengths ####
 # for reproducibility
 set.seed(3049)
 random.J <- map(Pij, get_measures, s2 = 1, trials = 250)
@@ -72,24 +71,24 @@ random.J <- map(random.J, ldply)
 random.J <- ldply(random.J)
 gradient <- readRDS("data/pca_axis_26_sites.RDS")
 random.J <- left_join(random.J, gradient, by = c(".id" = "site"))
-joy.stability(random.J, title = "Random Jij",
-              scale = 3, rel_min_height = 0.07,
-              bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
-fwpointrange(random.J, y = "C") +
-  labs(title = "random.J Connectance")
-ggplot(random.J, aes(y = stab, x = pca1))+
-  stat_summary(fun.y = mean,
-               fun.ymin = function(x) mean(x) - sd(x),
-               fun.ymax = function(x) mean(x) +sd(x),
-               geom = "pointrange", fatten = 5) +
-  theme_bw() +
-  labs(x = "Mining gradient",
-       y = "Stability") +
-  theme(axis.title = element_text(size = 30),
-        axis.text = element_text(size = 20)) 
+# joy.stability(random.J, title = "Random Jij",
+#               scale = 3, rel_min_height = 0.07,
+#               bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
+# fwpointrange(random.J, y = "C") +
+#   labs(title = "random.J Connectance")
+# ggplot(random.J, aes(y = stab, x = pca1))+
+#   stat_summary(fun.y = mean,
+#                fun.ymin = function(x) mean(x) - sd(x),
+#                fun.ymax = function(x) mean(x) +sd(x),
+#                geom = "pointrange", fatten = 5) +
+#   theme_bw() +
+#   labs(x = "Mining gradient",
+#        y = "Stability") +
+#   theme(axis.title = element_text(size = 30),
+#         axis.text = element_text(size = 20)) 
 
 
-# scaled interaction strengths
+# scaled interaction strengths ####
 # for reproducibility
 set.seed(3049)
 scaled.J <- map(Pij, get_measures, s2 = 2, trials = 250, scale.Jij = TRUE)
@@ -97,12 +96,12 @@ scaled.J <- map(scaled.J, ldply)
 scaled.J <- ldply(scaled.J)
 gradient <- readRDS("data/pca_axis_26_sites.RDS")
 scaled.J <- left_join(scaled.J, gradient, by = c(".id" = "site"))
-joy.stability(scaled.J, title = "Body size scaled Jij", scale = 3, rel_min_height = 0.07, bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
+# joy.stability(scaled.J, title = "Body size scaled Jij", scale = 3, rel_min_height = 0.07, bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
 #fwpointrange(scaled.J, y = "C") +
 #  labs(title = "scaled.J Connectance")
 
 
-# correlated interaction strengths
+# correlated interaction strengths ####
 # for reproducibility
 set.seed(3049)
 corr.J <- map(Pij, get_measures, s2 = 2, trials = 250, correlate.Jij = TRUE)
@@ -110,9 +109,9 @@ corr.J <- map(corr.J, ldply)
 corr.J <- ldply(corr.J)
 gradient <- readRDS("data/pca_axis_26_sites.RDS")
 corr.J <- left_join(corr.J, gradient, by = c(".id" = "site"))
-joy.stability(corr.J, title = "Correlated Jij", scale = 3, rel_min_height = 0.07, bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
+# joy.stability(corr.J, title = "Correlated Jij", scale = 3, rel_min_height = 0.07, bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
 
-# scaled and correlated interaction strengths
+# scaled and correlated interaction strengths ####
 # for reproducibility
 set.seed(3049)
 s.c.J <- map(Pij, get_measures,
@@ -121,9 +120,9 @@ s.c.J <- map(s.c.J, ldply)
 s.c.J <- ldply(s.c.J)
 gradient <- readRDS("data/pca_axis_26_sites.RDS")
 s.c.J <- left_join(s.c.J, gradient, by = c(".id" = "site"))
-joy.stability(s.c.J, title = "Scaled and correlated Jij",
-              scale = 3, rel_min_height = 0.07,
-              bandwidth = 0.007, xmin = -.02, xmax = 0.13)
+# joy.stability(s.c.J, title = "Scaled and correlated Jij",
+#               scale = 3, rel_min_height = 0.07,
+#               bandwidth = 0.007, xmin = -.02, xmax = 0.13)
 
 # save S and C parameters for Random matrices
 S_C_parameters <- random.J %>%
@@ -159,7 +158,7 @@ saveRDS(stability.results, "data/stability_results.RDS")
 
 
 
-
+# below this is trash? ####
 
 
 get_Jij <- function(matr, trials = 1, scale.Jij = FALSE, 
@@ -194,7 +193,7 @@ get_Jij <- function(matr, trials = 1, scale.Jij = FALSE,
   }
   return(result)
 }
-# Smanually scale colors
+# manually scale colors
 # col = colorpanel(n = 50, low = "blue", mid = "beige", high = "red")
 A <- rm_cycle(b_trial(Pij$Lankey))
 heatmap.2(A, 
