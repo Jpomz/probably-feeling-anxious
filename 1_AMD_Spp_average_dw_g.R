@@ -6,6 +6,43 @@ library(tidyverse)
 bugs <- read_csv("data/raw data/AMD estimated invert dw g.csv")
 fish <- read_csv("data/raw data/estimated fish dw g.csv")
 
+# add couple of rows for extra fish estimated in k_pass removal script here
+# to kiwi --> add 2 anguilla, 3, gobiomorphus, 2 galaxias maculatus
+
+# calculate mean dw values for additional fish
+mean.k.ang <- fish %>%
+  filter(site =="Kiwi", taxa =="Anguilla.australis") %>%
+  summarize(dw = mean(dw))
+
+mean.k.gob <- fish %>%
+  filter(site =="Kiwi", taxa =="Gobiomorphus.huttoni") %>%
+  summarize(dw = mean(dw))
+
+mean.k.mac <- fish %>%
+  filter(site =="Kiwi", taxa =="Galaxias.maculatus") %>%
+  summarize(dw = mean(dw))
+
+# make data frame of extra observations
+plus.fish <- data.frame(site = "Kiwi",
+                       date_coll = "2.3.16",
+                       taxa = c(rep("Anguilla.australis",2),
+                                rep("Gobiomorphus.huttoni", 3),
+                                rep("Galaxias.maculatus",2)),
+                       reach_width = 2.5, 
+                       reach_length = 20,
+                       ln_a = NA, 
+                       b = NA, 
+                       base = NA,
+                       log = NA,
+                       dw = as.numeric(c(rep(mean.k.ang, 2),
+                              rep(mean.k.gob, 3),
+                              rep(mean.k.mac, 2))),
+                       area = 50,
+                       stringsAsFactors = FALSE)
+
+fish <- bind_rows(fish, plus.fish)
+
+# cleanup bugs data
 # remove Burcoa site
 bugs <- bugs %>%
   filter(site != "Burcoa")
