@@ -196,3 +196,43 @@ grid.arrange(
              size = 6),
   ncol = 2)
 dev.off()
+
+
+# stability ~ fw measures plots
+dat <- dat.df %>% filter(.id == "random")
+dat <- dat %>%
+  mutate(num_0 = S**2 - L,
+         prop_0 = num_0 / S**2)
+
+ggplot(aes(x = log(num_0), y = log(stab), color = pca1), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm")
+ggplot(aes(x = prop_0, y = stab, color = pca1), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm")
+
+
+ggplot(aes(x = C, y = stab, color = pca1), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm")
+
+summary(lm(stab~prop_0, data = dat))
+
+ggplot(aes(x = pca1, y = stab, color = pca1), data = dat)+
+  geom_point(alpha = 0.2)
+
+
+ggplot(aes(x = S, y = prop_0, color = pca1), data = dat)+
+  geom_point(alpha = 0.2)
+
+ggplot(aes(x = num_0, y = stab, color = pca1), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm")
+
+ggplot(aes(x = pca1, y = prop_0, color = pca1), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm")
+
+ggplot(aes(x = pca1, y = prop_0, color = stab), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm")

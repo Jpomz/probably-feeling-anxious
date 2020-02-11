@@ -236,3 +236,4 @@ plot(stab~num_0, data = z)
 
 
 # hold proportion of 0's constant, vary S
+
