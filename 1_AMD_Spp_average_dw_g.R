@@ -6,8 +6,9 @@ library(tidyverse)
 bugs <- read_csv("data/raw data/AMD estimated invert dw g.csv")
 fish <- read_csv("data/raw data/estimated fish dw g.csv")
 
-# add couple of rows for extra fish estimated in k_pass removal script here
-# to kiwi --> add 2 anguilla, 3, gobiomorphus, 2 galaxias maculatus
+# add rows for total estimated fish calculated in 1a_k_pass_removal.R script 
+# Only kiwi site had additional fish
+# --> add 2 anguilla, 3 gobiomorphus, 2 galaxias maculatus
 
 # calculate mean dw values for additional fish
 mean.k.ang <- fish %>%
@@ -75,16 +76,11 @@ fish <- fish %>%
 # bind rows
 full.data <- bind_rows(bugs, fish)
 
-# calculate average dw, density, area, per site and taxa
+# calculate average dw, density, and area by site and taxa
 dataset <- full.data %>% 
   group_by(site) %>%
   mutate(tot.ab = sum(density),
          rel.ab = density / tot.ab) %>%
   ungroup()
-
-rm.taxa <- c("Acari", "Copepoda", "Elmidae Adult", "Platyhelminthes", "Diptera", "Paraleptamphopus", "Ostracoda")
-
-dataset <- dataset %>% 
-  filter(!(taxa %in% rm.taxa))
 
 saveRDS(dataset, "data/AMD_fish_invert_dw_abundance.RDS")

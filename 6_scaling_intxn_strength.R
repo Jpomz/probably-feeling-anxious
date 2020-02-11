@@ -17,122 +17,217 @@ source("functions/MS_functions.R")
 # Sauve, A. M. C., Thébault, E., Pocock, M. J. O., & Fontaine, C. (2016). How plants connect pollination and herbivory networks and their contribution to community stability. Ecology, 97(4), 908-917. doi.org/10.1890/15-0132.1
 source("functions/stability_fxns_Sauve.R")
 
-# joy.stability <- function(data, x = "stab", xmin = -.09, xmax = 0.5,
-#                           title = NULL, scale = NULL,
-#                           bandwidth = NULL,
-#                           rel_min_height = NULL){
-#   ggplot(data, aes(x = data[[x]],
-#                    y = fct_reorder(.id, pca1),
-#                    height = ..density.., 
-#                    fill = pca1)) +
-#     stat_density_ridges(scale = scale, rel_min_height = rel_min_height,
-#                         bandwidth = bandwidth, alpha = 0.8) +
-#     theme_ridges(center_axis_labels = TRUE) +
-#     labs(y = "mining gradient", x = "stability") +
-#     scale_fill_distiller(palette = "Spectral") +
-#     theme(legend.position = "NULL")+
-#     coord_cartesian(xlim = c(xmin, xmax)) +
-#     if (is.null(title))
-#       labs(title = NULL) 
-#   else
-#     labs(title = title)
-# }
 
 # read in data
 # probabilty matrices
 Pij <- readRDS("data/AMD_final_probability_matrices.RDS")
-# remove portal site bc only has one taxa
-Pij$Portal <- NULL
+# gradient
+gradient <- readRDS("data/pca_axis_26_sites.RDS")
+
 
 # random interaction strengths ####
-# for reproducibility
+# set seed for reproducibility
 set.seed(3049)
-random.J <- map(Pij, get_measures, s2 = 1, trials = 250)
-random.J <- map(random.J, ldply)
-random.J <- ldply(random.J)
-gradient <- readRDS("data/pca_axis_26_sites.RDS")
+random.J <- ldply(
+  map(
+    map(
+      Pij,
+      get_measures, 
+      s2 = 2,
+      trials = 250),
+    ldply)
+)
+# join gradient + random.J
 random.J <- left_join(random.J, gradient, by = c(".id" = "site"))
-# joy.stability(random.J, title = "Random Jij",
-#               scale = 3, rel_min_height = 0.07,
-#               bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
-# fwpointrange(random.J, y = "C") +
-#   labs(title = "random.J Connectance")
-# ggplot(random.J, aes(y = stab, x = pca1))+
-#   stat_summary(fun.y = mean,
-#                fun.ymin = function(x) mean(x) - sd(x),
-#                fun.ymax = function(x) mean(x) +sd(x),
-#                geom = "pointrange", fatten = 5) +
+
+# plots
+# ggplot(random.J, aes(x = stab,
+#                      y = fct_reorder(.id, pca1),
+#                      fill = fct_reorder(.id, pca1))) +
+#   geom_density_ridges(rel_min_height = 0.05,
+#                        scale = 8,
+#                        alpha = 0.45) +
+#   scale_fill_manual(values = colorRampPalette(rev(brewer.pal(n = 11, name ="Spectral")))(25)) +
 #   theme_bw() +
-#   labs(x = "Mining gradient",
-#        y = "Stability") +
-#   theme(axis.title = element_text(size = 30),
-#         axis.text = element_text(size = 20)) 
+#   theme(legend.position = "NULL",
+#         axis.title = element_text(size = 20),
+#         axis.text = element_text(size = 15)) +
+#   labs(title = "Random Jij",
+#        y = "Site",
+#        x = "s") +
+#   coord_cartesian(xlim = c(-.009, .11)) +
+#   NULL
+
+# ggplot(random.J, aes(x = C,
+#                      y = fct_reorder(.id, pca1),
+#                      fill = fct_reorder(.id, pca1))) +
+#   geom_density_ridges(rel_min_height = 0.05,
+#                       scale = 1,
+#                       alpha = 0.45) +
+#   scale_fill_manual(values = colorRampPalette(rev(brewer.pal(n = 11, name ="Spectral")))(25)) +
+#   theme_bw() +
+#   theme(legend.position = "NULL",
+#         axis.title = element_text(size = 20),
+#         axis.text = element_text(size = 15)) +
+#   labs(y = "Site",
+#        x = "C") +
+#   #coord_cartesian(xlim = c(-.009, .11)) +
+#   NULL
+# 
+# ggplot(random.J, aes(x = log10(L),
+#                      y = fct_reorder(.id, pca1),
+#                      fill = fct_reorder(.id, pca1))) +
+#   geom_density_ridges(rel_min_height = 0.01,
+#                       scale = 10,
+#                       alpha = 0.45) +
+#   scale_fill_manual(values = colorRampPalette(rev(brewer.pal(n = 11, name ="Spectral")))(25)) +
+#   theme_bw() +
+#   theme(legend.position = "NULL",
+#         axis.title = element_text(size = 20),
+#         axis.text = element_text(size = 15)) +
+#   labs(y = "Site",
+#        x = "L") +
+#   #coord_cartesian(xlim = c(-.009, .11)) +
+#   NULL
+
+
 
 
 # scaled interaction strengths ####
 # for reproducibility
 set.seed(3049)
-scaled.J <- map(Pij, get_measures, s2 = 2, trials = 250, scale.Jij = TRUE)
-scaled.J <- map(scaled.J, ldply)
-scaled.J <- ldply(scaled.J)
-gradient <- readRDS("data/pca_axis_26_sites.RDS")
-scaled.J <- left_join(scaled.J, gradient, by = c(".id" = "site"))
-# joy.stability(scaled.J, title = "Body size scaled Jij", scale = 3, rel_min_height = 0.07, bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
-#fwpointrange(scaled.J, y = "C") +
-#  labs(title = "scaled.J Connectance")
+scaled.J <- ldply(
+  map(
+    map(
+      Pij,
+      get_measures,
+      s2 = 2,
+      trials = 250,
+      scale.Jij = TRUE),
+    ldply)
+  )
 
+scaled.J <- left_join(scaled.J, gradient, by = c(".id" = "site"))
+
+# plots
+# ggplot(scaled.J, aes(x = stab,
+#                      y = fct_reorder(.id, pca1),
+#                      fill = fct_reorder(.id, pca1))) +
+#   geom_density_ridges(rel_min_height = 0.05,
+#                        scale = 8,
+#                        alpha = 0.45) +
+#   theme_bw() +  
+#   scale_fill_manual(values = colorRampPalette(rev(brewer.pal(n = 11, name ="Spectral")))(25)) +
+#   theme(legend.position = "NULL",
+#         axis.title = element_text(size = 20),
+#         axis.text = element_text(size = 15)) +
+#   labs(title = "Scaled Jij",
+#        y = "Site",
+#        x = "s") +
+#   coord_cartesian(xlim = c(-.004, .05)) +
+#   NULL
 
 # correlated interaction strengths ####
 # for reproducibility
 set.seed(3049)
-corr.J <- map(Pij, get_measures, s2 = 2, trials = 250, correlate.Jij = TRUE)
-corr.J <- map(corr.J, ldply)
-corr.J <- ldply(corr.J)
-gradient <- readRDS("data/pca_axis_26_sites.RDS")
+corr.J <- ldply(
+  map(
+    map(
+      Pij,
+      get_measures, 
+      s2 = 2, 
+      trials = 250, 
+      correlate.Jij = TRUE),
+    ldply)
+)
 corr.J <- left_join(corr.J, gradient, by = c(".id" = "site"))
-# joy.stability(corr.J, title = "Correlated Jij", scale = 3, rel_min_height = 0.07, bandwidth = 0.007, xmin = -0.02, xmax = 0.13)
+#plots
+# ggplot(corr.J, aes(x = stab,
+#                      y = fct_reorder(.id, pca1),
+#                      fill = fct_reorder(.id, pca1))) +
+#   geom_density_ridges(rel_min_height = 0.05,
+#                       scale = 8,
+#                       alpha = 0.45) +
+#   theme_bw() +  
+#   scale_fill_manual(values = colorRampPalette(rev(brewer.pal(n = 11, name ="Spectral")))(25)) +
+#   theme(legend.position = "NULL",
+#         axis.title = element_text(size = 20),
+#         axis.text = element_text(size = 15)) +
+#   labs(title = "Scaled Jij",
+#        y = "Site",
+#        x = "s") +
+#   #coord_cartesian(xlim = c(-.004, .05)) +
+#   NULL
 
 # scaled and correlated interaction strengths ####
 # for reproducibility
 set.seed(3049)
-s.c.J <- map(Pij, get_measures,
-              s2 = 2, trials = 250, correlate.Jij = TRUE, scale.Jij = TRUE)
-s.c.J <- map(s.c.J, ldply)
-s.c.J <- ldply(s.c.J)
-gradient <- readRDS("data/pca_axis_26_sites.RDS")
+s.c.J <- ldply(
+  map(
+    map(
+      Pij,
+      get_measures,
+      s2 = 2,
+      trials = 250, 
+      correlate.Jij = TRUE,
+      scale.Jij = TRUE),
+    ldply),
+)
+
 s.c.J <- left_join(s.c.J, gradient, by = c(".id" = "site"))
-# joy.stability(s.c.J, title = "Scaled and correlated Jij",
-#               scale = 3, rel_min_height = 0.07,
-#               bandwidth = 0.007, xmin = -.02, xmax = 0.13)
+
+# ggplot(s.c.J, aes(x = stab,
+#                      y = fct_reorder(.id, pca1),
+#                      fill = fct_reorder(.id, pca1))) +
+#   geom_density_ridges(rel_min_height = 0.05,
+#                        scale = 3,
+#                        alpha = 0.5) +
+#   theme_bw() +
+#   scale_fill_manual(
+#     values = colorRampPalette(rev(
+#       brewer.pal(n = 11, name ="Spectral")))(25)) +
+#   theme(legend.position = "NULL",
+#         axis.title = element_text(size = 10),
+#         axis.text = element_text(size = 10)) +
+#   labs(title = "Scaled & Correlated Jij",
+#        y = "Site",
+#        x = "s") +
+#   coord_cartesian(xlim = c(-.009, .11)) +
+#   NULL
+
 
 # save S and C parameters for Random matrices
-S_C_parameters <- random.J %>%
-  group_by(.id) %>%
-  summarise(S.mean = mean(S),
-            S.sd = sd(S),
-            C.mean = mean(C),
-            C.sd = sd(C))
-
-S_C_parameters <- S_C_parameters %>%
-  mutate(C = C.mean,
-         C.hi = C.mean + C.sd,
-         C.lo = C.mean - C.sd)
+# S_C_parameters <- random.J %>%
+#   group_by(.id) %>%
+#   summarise(S.mean = mean(S),
+#             S.sd = sd(S),
+#             C.mean = mean(C),
+#             C.sd = sd(C))
+# 
+# S_C_parameters <- S_C_parameters %>%
+#   mutate(C = C.mean,
+#          C.hi = C.mean + C.sd,
+#          C.lo = C.mean - C.sd)
 # write table for MS
-S_C_parameters %>%
-  select(S.mean, C, C.hi, C.lo) %>%
-  arrange(S.mean) %>%
-  write.csv("figures/S_C_Values.csv",
-            row.names = FALSE)
+# S_C_parameters %>%
+#   select(S.mean, C, C.hi, C.lo) %>%
+#   arrange(S.mean) %>%
+#   write.csv("figures/S_C_Values.csv",
+#             row.names = FALSE)
+# 
+# S_C_parameters <- S_C_parameters %>%
+#   select(S.mean, C, C.hi, C.lo) %>%
+#   gather("C_param", "C_value", 2:4) %>%
+#   arrange(S.mean)
+# 
+# saveRDS(S_C_parameters, "data/S_C_parameters_for_random_matrices.RDS")
 
-S_C_parameters <- S_C_parameters %>%
-  select(S.mean, C, C.hi, C.lo) %>%
-  gather("C_param", "C_value", 2:4) %>%
-  arrange(S.mean)
-
-saveRDS(S_C_parameters, "data/S_C_parameters_for_random_matrices.RDS")
-
-
-stability.results <- list(random = random.J[,-1], scaled = scaled.J[,-1], corr = corr.J[,-1], s.c = s.c.J[,-1])
+# combine all stability results into a list. 
+# removing column 1 (".id") from each dataframe. This information is redundant with "Site" column
+stability.results <- list(random = random.J[,-1],
+                          scaled = scaled.J[,-1],
+                          corr = corr.J[,-1],
+                          s.c = s.c.J[,-1])
 stability.results <- ldply(stability.results)
 
 saveRDS(stability.results, "data/stability_results.RDS")

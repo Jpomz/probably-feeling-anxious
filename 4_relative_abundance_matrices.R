@@ -4,8 +4,8 @@
 
 # 1) calculate relative abundance matrices for AMD sites
 # 2) "correct" fish relative abundances as in 
-# Pomeranz et al. in review Methods in Eco and Evo
-# 3) rescale relative abundances to be between 0.5 and 1
+# Pomeranz et al. 2019 Methods in Eco and Evo
+# 3) rescale relative abundances to be between 0.5 and 1 (see supplemental material and scripts)
 
 library(plyr)
 library(purrr)
@@ -22,19 +22,24 @@ dat.list <- split(dat, list(dat$site))
 
 # 1) relative abundance ####
 # calculate relative abundance matrices
+# get_rel_ab() is function in MS_functions.R
 rel.ab <- llply(dat.list, function (x){
   get_rel_ab(vec = x$rel.ab, taxa = x$taxa)
 })
 
-# 2) correct fish ####
+# 2) correct fish relative abundance ####
 # vector of fish taxa
 taxa.fish <- c("Salmo.trutta", "Anguilla.australis",
                "Galaxias.fasciatus", "Galaxias.maculatus",
                "Gobiomorphus.huttoni")
-rel.ab <- map(rel.ab, correct_fish_rel_ab, fish = taxa.fish)
+rel.ab <- map(rel.ab,
+              correct_fish_rel_ab, # function in MS_functions.R
+              fish = taxa.fish)
 
 # 3) rescale ####
-rel.ab <- map(rel.ab, scalexy, min = 0.5, max = 1)
+rel.ab <- map(rel.ab,
+              scalexy, # function in MS_functions.R
+              min = 0.5, max = 1)
 
 saveRDS(rel.ab, "data/AMD_relative_abundance_matrices.RDS")
 

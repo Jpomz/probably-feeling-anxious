@@ -6,13 +6,14 @@
 # based on body size, and parameters calculated using the integrated model
 # script 2_trait_match_model.R
 
-library(dplyr)
 library(plyr)
+library(dplyr)
 library(traitmatch)
 library(gplots)
 library(purrr)
 # function from Bartomeus
 source("functions/predict.niche.prob.R")
+#functions written for this ms
 source("functions/MS_functions.R")
 
 # model paramaters calculated using individual level data from Woodward et al. 2010. 
@@ -39,30 +40,32 @@ link.probs <- llply(M, function (x){
                      replicates = 1)
 })
 
-# # plot link probabilities for illustration
-# mybreaks <- seq(0,1,0.1)
-# for (i in 1:length(link.probs)){
-#   heatmap.2(matrix(link.probs[[i]][[1]],
-#                    length(dataset[[i]]$avg.dw),
-#                    length(dataset[[i]]$avg.dw)),
-#             Rowv = NA,
-#             Colv = NA,
-#             scale = "none",
-#             trace = "none",
-#             dendrogram = "none",
-#             breaks = mybreaks,
-#             key = F,
-#             labRow = NA,
-#             labCol = NA,
-#             main= "Probability of interaction",
-#             xlab = "Consumer",
-#             ylab = "Resource")
-# }
+# plot link probabilities for illustration
+mybreaks <- seq(0,1,0.05)
+for (i in 1:length(link.probs)){
+  heatmap.2(matrix(link.probs[[i]][[1]],
+                   length(dataset[[i]]$avg.dw),
+                   length(dataset[[i]]$avg.dw)),
+            Rowv = NA,
+            Colv = NA,
+            scale = "none",
+            trace = "none",
+            dendrogram = "none",
+            breaks = mybreaks,
+            key = F,
+            labRow = NA,
+            labCol = NA,
+            main= c("Probability of interaction for site:",
+                    names(link.probs)[i]),
+            xlab = "Consumer",
+            ylab = "Resource")
+}
 
 # probability matrix ####
 # link.probs[[i]][[1]] == vector of link probabilities
 # pull out just that element
 prob.vec <- lapply(link.probs, "[[", 1)
+
 # convert vector to a matrix. Vector is organized by dw
 # as long as use the right ncol/nrow argument, matrix will be size sorted (e.g. typical predation matrix)
 

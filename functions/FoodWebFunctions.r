@@ -353,13 +353,17 @@ Cannibals <- function(web)
   length(dimnames(web)[[1]][diag(web)==1]) / length(web[1,])
 
 Gen.sd <- function(web)
+  # below is Pomeranz correction feb 2020
+  sd(colSums(web)/(sum(web)/length(web[,1])))
 	## corrected, cf. Thomas Barnum, 24.1.1013
-	sd(colSums(web)/sum(web)/length(web[,1]))
+	## sd(colSums(web)/sum(web)/length(web[,1]))
     ##sd(colSums(web)/sum(web))
 
 Vul.sd <- function(web)
-	## corrected, cf. Thomas Barnum, 24.1.1013
-	sd(rowSums(web)/sum(web)/length(web[,1]))
+  # below is Pomeranz correction feb 2020
+  sd(rowSums(web)/(sum(web)/length(web[,1])))
+## corrected, cf. Thomas Barnum, 24.1.1013
+	## sd(rowSums(web)/sum(web)/length(web[,1]))
     ##sd(rowSums(web)/sum(web))
 
 Maxsim <- function(web){

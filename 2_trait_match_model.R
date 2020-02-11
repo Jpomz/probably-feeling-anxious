@@ -9,6 +9,14 @@
 
 library(plyr)
 library(tidyverse)
+# to install "traitmatch" package, see:
+# https://github.com/ibartomeus/traitmatch
+# note that the syntax of the command:
+# install_github("traitmatch", "ibartomeus")
+# is deprecated. 
+# replace with :
+# install_github("ibartomeus/traitmatch")
+
 library(traitmatch)
 
 
@@ -17,7 +25,8 @@ library(traitmatch)
 bs <- read_csv("data/raw data/BroadstoneData_AERv45ch3.csv", skip = 16)[,-1]
 bs <- bs %>%
   select(predMass, preyMass)
-# tadnoll brook data in mg dw
+# tadnoll brook data
+# individual pred-prey biomass data in mg
 tb <- read_csv("data/raw data/tadnoll pred prey biomass.csv")
 # combine data sets
 all.dat <- bind_rows(bs, tb)
@@ -29,11 +38,12 @@ all.dat <- all.dat %>%
 
 
 ggplot(all.dat, aes(log10(predMass), log10(preyMass)))+
-  geom_point()+
-  stat_quantile(quantiles = c(0.05,0.95)) +
+  geom_point(alpha = 0.2)+
+  stat_quantile(quantiles = c(0.025,0.975)) +
   theme_bw()
 
 # Trait match####
+# see Bartomeus et al. 2015 for discussion on "integrated model"
 MPred <- log10(all.dat$predMass)
 MPrey <- log10(all.dat$preyMass) 
 
@@ -48,45 +58,46 @@ pars_integrated <- fit_it(integrated_model,
               par_lo = c(a0 = -10, a1 = 0, b0 = -10, b1 = -10),
               par_hi = c(a0 = 10, a1 = 10, b0 = 10, b1 = 10),
               max.time = mt)
-# # plot integrated model
-# plot_pred(pars = pars_integrated,
-#           Tlevel1 = MPrey,
-#           Tlevel2 = MPred,
-#           xlab = "log (Predator body size)",
-#           ylab = "log (prey body size)",
-#           pch = "0")
-# # estimate parameters using niche model
-pars_niche <- fit_it(niche_model,
-              Tlevel1 = MPrey,
-              Tlevel2 = MPred,
-              mean_Tlevel1 = mean(MPrey),
-              sd_Tlevel1 = sd(MPrey),
-              pars = c(a0 = 0, a1 = 0, b0 = 0, b1 = 0),
-              par_lo = c(a0 = -10, a1 = 0, b0 = -10, b1 = -10),
-              par_hi = c(a0 = 10, a1 = 10, a1b0 = 10, b1 = 10),
-              max.time = mt)
-
-# # Plot niche model
-# plot_pred(pars = pars_niche,
-#           Tlevel1 = MPrey,
-#           Tlevel2 = MPred,
-#           xlab = "log (Predator body size)",
-#           ylab = "log (prey body size)",
-#           pch = "0")
-
-# compare integrated, niche, neutral models
-lh_model <- -integrated_model(pars_integrated, MPrey,
-                              MPred, mean(MPrey), sd(MPrey))
-lh_niche <- -niche_model(pars_niche, MPrey, MPred,
-                         mean(MPrey), sd(MPrey))
-lh_neutral <- -neutral_model(pars = NULL, MPrey, MPred,
-                             mean(MPrey), sd(MPrey))
-barplot(c(lh_model, lh_niche, lh_neutral),
-        names.arg = c("integrated",
-                      "niche",
-                      "neutral"))
-# integrated is "better"
+# plot integrated model
+plot_pred(pars = pars_integrated,
+          Tlevel1 = MPrey,
+          Tlevel2 = MPred,
+          xlab = "log (Predator body size)",
+          ylab = "log (prey body size)",
+          pch = "0")
 
 saveRDS(pars_integrated, "data/Integrated_model_params.RDS")
 
+
+# compare to other model fits
+pars_pre_niche <- fit_it(niche_model,
+                         Tlevel1 = MPrey, 
+                         Tlevel2 = MPred,
+                         mean_Tlevel1 = mean(MPrey),
+                         sd_Tlevel1 = sd(MPrey),
+                         pars = c(a0 = 0, a1 = 0, b0 = 0, b1 = 0),
+                         par_lo = c(a0 = -10, a1 = 0, b0 = -10, b1 = -10),
+                         par_hi = c(a0 = 10, a1 = 10, b0 = 10, b1 = 10),
+                         max.time = mt)
+
+lh_model <- -integrated_model(pars_integrated, MPrey, MPred, mean(MPrey),sd(MPrey))
+lh_niche <- -niche_model(pars_pre_niche, MPrey, MPred, mean(MPrey), sd(MPrey))
+lh_neutral <- -neutral_model(pars = NULL, MPrey, MPred, mean(MPrey), sd(MPrey))
+
+# Visualization
+barplot(c(lh_model, lh_niche, lh_neutral), names.arg = c("integrated", "niche", "neutral"))
+
+
+
+# percent of realized interactions greater than some probability
+# function from Bartomeus
+source("functions/predict.niche.prob.R")
+# Calculate interaction probabilies (pLM)
+int_prob <- predict.niche.prob(pars_pre, MPrey, MPred, replicates = 1)[[2]]
+
+# column "pLM" is the predicted probability of an interaction from the model
+int_prob %>%
+  filter(pLM <0.5) %>% #probabilities > or < some probability e.g. 0.5
+  count %>% # no. obs for given probabilty
+  mutate(n / nrow(niche_probs)) # proportion of realized links for given probability
 

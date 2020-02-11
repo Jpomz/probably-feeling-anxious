@@ -244,3 +244,144 @@ joy.stability <- function(data, x = "stab",
   else
     labs(title = title)
 }
+#=======================================#
+# Functions for figures and results ####
+#=======================================#
+# Marginal effects plot
+plot_marg_eff <- function(model, raw_data, title = NULL){
+  # marginal effects
+  marg_eff <- marginal_effects(model, method = "fitted")
+  # store as data frame
+  marg_eff_df <- as.data.frame(marg_eff$pca1)
+  
+  # plot raw data as points
+  # plot marginal effects line with 95% Credible Interval
+  ggplot()+
+    geom_point(data = raw_data,
+               aes(x = pca1,
+                   y = stab,
+                   color = reorder(Site, -pca1)
+               ),
+               alpha = 0.3,
+               position = position_jitter(width=0.1))+
+    geom_ribbon(data = marg_eff_df,
+                aes(x = pca1,
+                    ymin = lower__,
+                    ymax = upper__),
+                alpha = 0.15)+
+    geom_line(data = marg_eff_df,
+              aes(x = pca1,
+                  y = estimate__),
+              color = "blue",
+              size=1) +
+    guides(colour = guide_legend(override.aes = list(alpha = 1),
+                                 title="Site"))+
+    scale_color_manual(values = colorRampPalette((brewer.pal(
+      n = 11,
+      name = "Spectral")))(25))+
+    ylab(expression(paste("Stability, ", italic("s")))) +
+    xlab("PCA1") +
+    ggtitle(title)
+}
+
+# slightly modified function for FW_measures
+plot_marg_eff_fw <- function(model, raw_y, raw_data, title = NULL){
+  marg_eff <- marginal_effects(model, method = "fitted")
+  marg_eff_df <- as.data.frame(marg_eff$pca1)
+  ggplot()+
+    geom_point(data = raw_data,
+               aes(x = pca1,
+                   y = raw_data[,raw_y],
+                   color = reorder(Site, -pca1)
+               ),
+               alpha = 0.3,
+               position = position_jitter(width=0.1))+
+    geom_ribbon(data = marg_eff_df,
+                aes(x = pca1,
+                    ymin = lower__,
+                    ymax = upper__),
+                alpha = 0.15)+
+    geom_line(data = marg_eff_df,
+              aes(x = pca1,
+                  y = estimate__),
+              color = "blue",
+              size=1) +
+    guides(colour = guide_legend(override.aes = list(alpha = 1),
+                                 title="Site"))+
+    scale_color_manual(values = colorRampPalette((brewer.pal(
+      n = 11,
+      name = "Spectral")))(25))+
+    ylab(raw_y) +
+    xlab("PCA1") +
+    ggtitle(title)
+}
+
+# plot prior and posterior distributions
+# this function assumes priors are the same for 
+# both parameters
+plot_prior_vs_posterior <- function(model,
+                                    prior_mu = 0,
+                                    prior_sigma = 1){
+  int_coef <- fixef(model)[1,1:2]
+  slope_coef <- fixef(model)[2,1:2]
+  
+  plot.dat <- data.frame(
+    value = c(rnorm(1000, prior_mu, prior_sigma), 
+              rnorm(1000, int_coef[1], int_coef[2]),
+              rnorm(1000, slope_coef[1], slope_coef[2])),
+    sample = rep(c("Both Priors",
+                   "Intercept posterior",
+                   "Slope posterior"),
+                 each = 1000))
+  ggplot(plot.dat, aes(x = value, fill = sample))+
+    geom_density(alpha = 0.75)
+}
+# summarize bayesian model results
+model_summary <- function(model){
+  
+  # extract posterior samples
+  post_model <- posterior_samples(model)
+  
+  # coefficient information
+  int_coef <- quantile(exp(post_model$b_Intercept),
+                       probs=c(0.025,0.5,0.975))
+  slope_coef <- quantile(exp(post_model$b_pca1),
+                         probs=c(0.025,0.5,0.975))
+  prob_slope_declines <- sum(exp(post_model$b_pca1) < 1) /
+    nrow(post_model)
+  
+  # Relative change across gradient calculations
+  reference = -3.5599
+  min_impacts = -0.8089
+  max_impacts = 6.1127
+  
+  # calculate fitted response variable at 3 points
+  ref_stab <- exp(post_model$b_Intercept +
+                    post_model$b_pca1 * 
+                    reference)
+  min_impacts_stab <- exp(post_model$b_Intercept +
+                            post_model$b_pca1 * 
+                            min_impacts)
+  max_impacts_stab <- exp(post_model$b_Intercept +
+                            post_model$b_pca1 * 
+                            max_impacts)
+  
+  # fold change with increasing impacts
+  # ref to min_impacts
+  ref_to_min <- quantile(ref_stab/min_impacts_stab,
+                         probs = c(0.025, 0.5, 0.975))
+  # ref to max impacts
+  ref_to_max <- quantile(ref_stab/max_impacts_stab,
+                         probs = c(0.025, 0.5, 0.975))
+  # min to max impacts
+  min_to_max <- quantile(min_impacts_stab/max_impacts_stab,
+                         probs = c(0.025, 0.5, 0.975))
+  datout <-rbind(int_coef,
+                 slope_coef,
+                 ref_to_min,
+                 ref_to_max,
+                 min_to_max)
+  datout <- list(CrI = datout,
+                 Prob_declines = prob_slope_declines)
+  return(datout)
+}
