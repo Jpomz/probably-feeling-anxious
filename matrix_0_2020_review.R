@@ -8,6 +8,21 @@ library(dplyr)
 library(purrr)
 library(ggplot2)
 
+# read in modelling data
+# for graphs at bottom 
+dat <- readRDS("data/stability_results.RDS")
+dat <- dat %>% 
+  # select one model output e.g. random
+  filter(.id == "random")
+
+# read in probability matrices
+Pij <- readRDS( "data/AMD_final_probability_matrices.RDS")
+# 
+mat41 <- Pij$Lankey
+mat27 <- Pij$Kiwi
+# # mat10 <- Pij$cbdale
+mat5 <- Pij$Packtr
+
 
 # stab_0 <- function(P, s2 = 2, trials = 10){
 #   result <- matrix(0, nrow = trials, ncol = 2)
@@ -23,13 +38,6 @@ library(ggplot2)
 # # 
 # # 
 # # # A <- matrix(0, 10, 10)
-# # # read in probability matrices
-Pij <- readRDS( "data/AMD_final_probability_matrices.RDS")
-# 
-mat41 <- Pij$Lankey
-mat27 <- Pij$Kiwi
-# # mat10 <- Pij$cbdale
-mat5 <- Pij$Packtr
 # # 
 # # # get_measures(mat41, s2 = 2)
 # # # b_trial(mat5)
@@ -154,13 +162,14 @@ mat5 <- Pij$Packtr
 
 # Matrices
 # hold S, vary 0's
-vary_0 <- function(nrow, ncol){
+vary_0 <- function(S){
   result <- NULL
-  m <- matrix(1, nrow, ncol)
+  m <- matrix(1, S, S)
   m <- rm_cycle(m)
   counter <- 1
   while(sum(m)>0){
     num_0 <- length(m[m==0])
+    prop_0 <- num_0 / nrow(m)**2
     J <- jacobian_binary(m)
     stab <- stability(J, s2 = 2)
     index <- which(m == 1, arr.ind = TRUE)
@@ -172,16 +181,34 @@ vary_0 <- function(nrow, ncol){
       # numeric?
       index <- index[order(index[,3]),]
       m[index[1,1], index[1,2]] = 0 
-      result[[counter]] <- c(num_0 = num_0, stab = stab)
+      result[[counter]] <- c(num_0 = num_0,
+                             prop_0 = prop_0,
+                             stab = stab,
+                             S = S)
       counter <- counter + 1
       }
     }
   return(result)
 }
-x <- replicate(n = 2, vary_0(nrow = 40, ncol = 40), simplify = FALSE)
+S <- c(5, 10, 15, 20, 25, 30, 35, 40)
+S.vary.0 <- ldply(
+  flatten(
+    flatten(
+      replicate(n = 10, 
+                map(S, vary_0),
+                simplify = FALSE))))
+
+ggplot(data = S.vary.0, aes(x = prop_0, y = stab, color = as.factor(S))) +
+  geom_point(alpha = 0.2) +
+  #geom_jitter(height = NULL, width = 0.5, alpha = 0.5)+ 
+  stat_smooth(method = "lm", se = FALSE) +
+  theme_bw() +
+  ggtitle("Random Matrices")
+
+x <- replicate(n = 2, vary_0(S = 40), simplify = FALSE)
 y <- flatten(x)
 z <- ldply(y)
-plot(z)
+plot(stab~ prop_0, data = z)
 
 
 x <- replicate(n = 5, vary_0(nrow = 40, ncol = 40), simplify = FALSE)
@@ -236,4 +263,86 @@ plot(stab~num_0, data = z)
 
 
 # hold proportion of 0's constant, vary S
+vary_S <- function(S, C){
+  sim_C <- 0
+  counter <- 1
+  while(sim_C <= 0.9*C | sim_C>= 1.1*C){
+    m <- matrix(runif(S^2, min = 0, max = 1), nrow = S, ncol = S)
+    m[which(m <= 1.1 * C)] = 1
+    m[which(m != 1)] = 0
+    m <- rm_cycle(m)
+    sim_C <- sum(m) / S^2
+    counter <- counter + 1
+    if(counter== 50){
+      break
+    }
+  }
+  J <- jacobian_binary(m)
+  stab <- stability(J, s2 = 2)
+  return(c(sim_C = sim_C, stab = stab, S = S, C_goal = C, counter = counter))
+}
+
+S <- c(5, 10, 15, 20, 25, 30, 35, 40)
+# C <- seq(0.1, 0.4, length.out = length(S))
+# 
+# sim.list <- data.frame(expand.grid(S = S, C = C))
+
+C.0.2 <- ldply(
+  flatten(
+    replicate(n = 100, 
+              map(S, vary_S, C = 0.2),
+              simplify = FALSE)))
+
+C.0.3 <- ldply(
+  flatten(
+    replicate(n = 100, 
+              map(S, vary_S, C = 0.3),
+              simplify = FALSE)))
+
+C.0.4 <- ldply(
+  flatten(
+    replicate(n = 100, 
+              map(S, vary_S, C = 0.4),
+              simplify = FALSE)))
+
+C.0.1 <- ldply(
+  flatten(
+    replicate(n = 100, 
+              map(S, vary_S, C = 0.1),
+              simplify = FALSE)))
+
+S.simulation <- rbind(C.0.1, C.0.2, C.0.3, C.0.4)
+dim(S.simulation)
+S.simulation <- S.simulation %>%
+  group_by(C_goal)%>%
+  mutate(med_C = median(sim_C)) %>%
+  filter(sim_C >= med_C)
+
+ggplot(data = S.simulation, aes(x = S, y = stab, color = as.factor(C_goal))) +
+#  geom_point(position = "jitter") +
+  geom_jitter(height = NULL, width = 0.5, alpha = 0.5)+ 
+  stat_smooth(se = FALSE) +
+  theme_bw() +
+  ggtitle("Random Matrices")
+
+
+
+
+# empirical / modelled food webs
+#Need to load "dat"
+# prop_0 ~ by s?
+dat <- dat %>%
+  mutate(prop_0 = (S^2 - L) / S^2)
+
+ggplot(dat, aes(x = S, y = prop_0))+
+  geom_point() +
+  #stat_smooth(method = "lm") +
+  stat_quantile(quantiles = c(0.1, 0.5, 0.9)) +
+  NULL
+
+ggplot(dat, aes(x = S, y = C))+
+  geom_point() +
+  #stat_smooth(method = "lm") +
+  #stat_quantile(quantiles = c(0.1, 0.5, 0.9))
+  NULL
 

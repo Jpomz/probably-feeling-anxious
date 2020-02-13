@@ -27,15 +27,18 @@ dat <- dat %>% filter(.id == "random")
 sum(dat$S==0)
 dim(dat)
 # #
+S.dat <- dat %>%
+  distinct(pca1, S, Site)
+
 S.brm <- brm(S ~ pca1 + (1|Site),
-               data = dat,
+               data = S.dat,
                family = Gamma(link = "log"),
                prior=c(prior(normal(0, 1),class = "b"),
                        prior(normal(0, 1),class = "Intercept")),
                chains = 4,
                iter = 2000,
                cores = 4,
-             control = list(max_treedepth = 15))
+             control = list(adapt_delta = 0.99))
 saveRDS(S.brm, "data/Bayesian_FW_S.RDS")
 pairs(S.brm)
 

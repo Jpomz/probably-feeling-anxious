@@ -236,3 +236,7 @@ ggplot(aes(x = pca1, y = prop_0, color = pca1), data = dat)+
 ggplot(aes(x = pca1, y = prop_0, color = stab), data = dat)+
   geom_point(alpha = 0.2) +
   stat_smooth(method = "lm")
+
+ggplot(aes(x = S, y = L), data = dat)+
+  geom_point(alpha = 0.2) +
+  stat_smooth(method = "lm", formula = y~poly(x,2))

@@ -22,17 +22,23 @@ dat <- dat %>%
 # Species ####
 S.brm <- readRDS("data/Bayesian_FW_S.RDS")
 S.marg.eff <- plot_marg_eff_fw(model = S.brm,
-                               raw_data = dat,
+                               raw_data = dat %>%
+                                 distinct(S, pca1, Site),
                                raw_y = "S",
+                               alpha.point = 0.99,
                                title = "No. Species") 
 
 # check posterior predictive ability of model
-pp_check(S.brm, type="boxplot")
+pp_check(S.brm, type="boxplot", notch = FALSE)
 # Boxplots largely overlap
 
 # print out model summary
 # (see MS_functions.R for more details)
 S.summary <- model_summary(S.brm)
+
+# remove for ram space
+rm(S.brm)
+
 
 # Links ####
 L.brm <- readRDS("data/Bayesian_FW_L.RDS")
@@ -142,7 +148,7 @@ png(filename = "data/figures/supplemental/Vul_prior_vs_posterior.png",
 plot_prior_vs_posterior(Vul.brm)
 dev.off()
 
-# remove randon model for RAM space
+# remove model for RAM space
 rm(Vul.brm)
 
 
@@ -157,8 +163,8 @@ model.summaries <- as.data.frame(model.summaries,
 model.summaries$variable <- column_1
 model.summaries$model <- rep(c("L",
                                "C",
-                               "SD Gen",
-                               "SD Vul"),
+                               "Gen",
+                               "Vul"),
                              each = 5)
 model.summaries <- model.summaries[,c(5,4,1:3)]
 
@@ -170,14 +176,23 @@ write.csv(model.summaries,
 # combine figures for MS
 png(filename = "data/figures/FW_figure.png",
     width = 6.5, height = 9, units = "in", res =300)
-grid.arrange(L.marg.eff +
+grid.arrange(S.marg.eff +
+               theme(legend.position = "none",
+                     axis.title.x=element_blank(),
+                     axis.text.x=element_blank())+
+               annotate(geom = "text",
+                        x = -3,
+                        y = 40,
+                        label = "A",
+                        size = 6),
+             L.marg.eff +
                theme(legend.position = "none",
                      axis.title.x=element_blank(),
                      axis.text.x=element_blank())+
                annotate(geom = "text",
                         x = -3,
                         y = 175,
-                        label = "A",
+                        label = "B",
                         size = 6),
              C.marg.eff +
                theme(legend.position = "none",
@@ -186,7 +201,7 @@ grid.arrange(L.marg.eff +
                annotate(geom = "text",
                         x = -3,
                         y = 0.25,
-                        label = "B",
+                        label = "C",
                         size = 6),
              Gen.marg.eff +
                theme(legend.position = "none",
@@ -194,15 +209,17 @@ grid.arrange(L.marg.eff +
                      axis.text.x=element_blank())+
                        annotate(geom = "text",
                                 x = -3,
-                                y = 0.25,
-                                label = "C",
+                                y = 0.6,
+                                label = "D",
                                 size = 6),
              Vul.marg.eff+
                theme(legend.position = "none")+
                annotate(geom = "text",
                         x = -3,
-                        y = 0.4,
-                        label = "D",
+                        y = 0.6,
+                        label = "E",
                         size = 6),
              ncol = 1)
 dev.off()
+
+
