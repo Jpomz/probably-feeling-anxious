@@ -1,6 +1,7 @@
 # interpret fw measures bayesian model output
 library(tidyverse)
 library(RColorBrewer)
+library(viridis)
 library(gridExtra)
 library(brms)
 source("functions/MS_functions.R")
@@ -21,12 +22,12 @@ dat <- dat %>%
 
 # Species ####
 S.brm <- readRDS("data/Bayesian_FW_S.RDS")
-S.marg.eff <- plot_marg_eff_fw(model = S.brm,
+(S.marg.eff <- plot_marg_eff_fw(model = S.brm,
                                raw_data = dat %>%
                                  distinct(S, pca1, Site),
                                raw_y = "S",
                                alpha.point = 0.99,
-                               title = "No. Species") 
+                               title = "No. Species") )
 
 # check posterior predictive ability of model
 pp_check(S.brm, type="boxplot", notch = FALSE)
@@ -35,6 +36,15 @@ pp_check(S.brm, type="boxplot", notch = FALSE)
 # print out model summary
 # (see MS_functions.R for more details)
 S.summary <- model_summary(S.brm)
+
+# plot prior vs posterior
+# for supplemental
+png(filename = "data/figures/supplemental/S_prior_vs_posterior.png",
+    width = 190, height = 190, units = "mm", res =600)
+plot_prior_vs_posterior(S.brm)
+dev.off()
+# print prior distributions
+fixef(S.brm)
 
 # remove for ram space
 rm(S.brm)
@@ -47,7 +57,7 @@ L.brm <- readRDS("data/Bayesian_FW_L.RDS")
 L.marg.eff <- plot_marg_eff_fw(model = L.brm,
                             raw_data = dat,
                             raw_y = "L",
-                            title = "No. Links") 
+                            title = "No. Links")
 
 # check posterior predictive ability of model
 pp_check(L.brm, type="boxplot")
@@ -60,14 +70,15 @@ L.summary <- model_summary(L.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/L_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
 plot_prior_vs_posterior(L.brm)
 dev.off()
+# print prior distributions
+fixef(L.brm)
 
 # remove model for RAM space
 rm(L.brm)
 
-#================================
 # connectance ####
 C.brm <- readRDS("data/Bayesian_FW_C.RDS")
 
@@ -88,7 +99,7 @@ C.summary <- model_summary(C.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/C_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
 plot_prior_vs_posterior(C.brm)
 dev.off()
 
@@ -116,14 +127,15 @@ Gen.summary <- model_summary(Gen.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/Gen_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
 plot_prior_vs_posterior(Gen.brm)
 dev.off()
+# print posterior distribution
+fixef(Gen.brm)
 
 # remove randon model for RAM space
 rm(Gen.brm)
 
-#================================
 # Vulnerability ####
 Vul.brm <- readRDS("data/Bayesian_FW_Vul.RDS")
 
@@ -144,16 +156,18 @@ Vul.summary <- model_summary(Vul.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/Vul_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
 plot_prior_vs_posterior(Vul.brm)
 dev.off()
+fixef(Vul.brm)
 
 # remove model for RAM space
 rm(Vul.brm)
 
 
 # make table of model summaries
-model.summaries <- rbind(L.summary[[1]],
+model.summaries <- rbind(S.summary[[1]],
+                         L.summary[[1]],
                          C.summary[[1]],
                          Gen.summary[[1]],
                          Vul.summary[[1]])
@@ -161,7 +175,8 @@ column_1 <- row.names(model.summaries)
 model.summaries <- as.data.frame(model.summaries,
                                  row.names = NA)
 model.summaries$variable <- column_1
-model.summaries$model <- rep(c("L",
+model.summaries$model <- rep(c("S",
+                               "L",
                                "C",
                                "Gen",
                                "Vul"),
@@ -175,7 +190,7 @@ write.csv(model.summaries,
 
 # combine figures for MS
 png(filename = "data/figures/FW_figure.png",
-    width = 6.5, height = 9, units = "in", res =300)
+    width = 6.5, height = 9, units = "in", res =600)
 grid.arrange(S.marg.eff +
                theme(legend.position = "none",
                      axis.title.x=element_blank(),

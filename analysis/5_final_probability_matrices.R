@@ -46,10 +46,6 @@ Pij <- map(Pij,
            min = 0.01,
            max = 0.99)
 
-# map(Pij, plot_heat)
-# #map(Pij, hist)
-# map(Pij, mean)
-
 # save final probabilities which account for
 # niche, neutral, and forbidden links
 saveRDS(Pij, "data/AMD_final_probability_matrices.RDS")
