@@ -1,11 +1,12 @@
 # 2_trait_match_model
 # 9 feb 2018
-#J Pomz
+# J Pomz on GitHub
 # jfpomeranz@gmail.com
 
 # 6 jun 2018
 # using individual data from Broadstone stream and Tadnoll Brook
 # received via email from Guy Woodward and Iwan Jones respectively
+# please contact them directly if you would like to use this data
 
 library(plyr)
 library(tidyverse)
@@ -18,6 +19,11 @@ library(tidyverse)
 # install_github("ibartomeus/traitmatch")
 
 library(traitmatch)
+
+# function to predict new interaction probabilities 
+# received from Ignasi Bartomeus
+# if using, please cite traitmatch package above and Bartomeus et al. 2016. A common framework for identifying linkage rules across different types of interactions. Functional Ecology
+source("functions/predict.niche.prob.R")
 
 
 # broadstone ####
@@ -90,9 +96,7 @@ barplot(c(lh_model, lh_niche, lh_neutral), names.arg = c("integrated", "niche", 
 
 
 # percent of realized interactions greater than some probability
-# function from Bartomeus
-source("functions/predict.niche.prob.R")
-# Calculate interaction probabilies (pLM)
+# Calculate interaction probabilies (pLM) using function predict.niceh.prob()
 int_prob <- predict.niche.prob(pars_pre, MPrey, MPred, replicates = 1)[[2]]
 
 # column "pLM" is the predicted probability of an interaction from the model

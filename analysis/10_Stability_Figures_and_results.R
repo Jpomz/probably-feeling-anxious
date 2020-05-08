@@ -1,7 +1,7 @@
 # interpret stability bayesian model outputs
 
 library(tidyverse)
-library(RColorBrewer)
+library(viridis)
 library(gridExtra)
 library(brms)
 source("functions/MS_functions.R")
@@ -45,7 +45,7 @@ rand.summary <- model_summary(rand.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/Random_model_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
     plot_prior_vs_posterior(rand.brm)
 dev.off()
 
@@ -72,7 +72,7 @@ scale.summary <- model_summary(scale.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/Scaled_model_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
     plot_prior_vs_posterior(scale.brm)
 dev.off()
 
@@ -99,7 +99,7 @@ corr.summary <- model_summary(corr.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/Correlated_model_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
     plot_prior_vs_posterior(corr.brm)
 dev.off()
 
@@ -125,7 +125,7 @@ s.c.summary <- model_summary(s.c.brm)
 # plot prior vs posterior
 # for supplemental
 png(filename = "data/figures/supplemental/S_c_model_prior_vs_posterior.png",
-    width = 190, height = 190, units = "mm", res =300)
+    width = 190, height = 190, units = "mm", res =600)
     plot_prior_vs_posterior(s.c.brm)
 dev.off()
 
@@ -158,7 +158,7 @@ png(filename = "data/figures/stability_figure.png",
     width = 6.5,
     height = 9,
     units = "in",
-    res = 300)
+    res = 600)
 grid.arrange(
   rand.marg.eff +
     theme(legend.position = "none",
@@ -198,45 +198,3 @@ grid.arrange(
 dev.off()
 
 
-# stability ~ fw measures plots
-dat <- dat.df %>% filter(.id == "random")
-dat <- dat %>%
-  mutate(num_0 = S**2 - L,
-         prop_0 = num_0 / S**2)
-
-ggplot(aes(x = log(num_0), y = log(stab), color = pca1), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm")
-ggplot(aes(x = prop_0, y = stab, color = pca1), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm")
-
-
-ggplot(aes(x = C, y = stab, color = pca1), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm")
-
-summary(lm(stab~prop_0, data = dat))
-
-ggplot(aes(x = pca1, y = stab, color = pca1), data = dat)+
-  geom_point(alpha = 0.2)
-
-
-ggplot(aes(x = S, y = prop_0, color = pca1), data = dat)+
-  geom_point(alpha = 0.2)
-
-ggplot(aes(x = num_0, y = stab, color = pca1), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm")
-
-ggplot(aes(x = pca1, y = prop_0, color = pca1), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm")
-
-ggplot(aes(x = pca1, y = prop_0, color = stab), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm")
-
-ggplot(aes(x = S, y = L), data = dat)+
-  geom_point(alpha = 0.2) +
-  stat_smooth(method = "lm", formula = y~poly(x,2))

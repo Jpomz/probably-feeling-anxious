@@ -1,4 +1,4 @@
-# Pomeranz and Harding Ecology
+# Pomeranz, Wesner and Harding Ecology
 # supplemental information
 # Method for inferring food web structure
 
@@ -62,7 +62,11 @@ N <- correct_fish_rel_ab(N,
                          cf = 10^3)
 
 # foodweb measures of empirical web
-A_meas <- round(Get.web.stats(A, which.stats = 2), 5)
+A_meas <- round(Get.web.stats(A, which.stats = 1), 5)
+A_meas[10] <-(A_meas[2] / (A_meas[1] * A_meas[6] + A_meas[1] * A_meas[5])) / A_meas[1]
+A_meas[11] <-(A_meas[2] / (A_meas[1] * A_meas[4] + A_meas[1] * A_meas[5])) / A_meas[1]
+
+names(A_meas) <- c("S", "L", "C", "B", "I", "T", "U", "CB", "PCB", "G", "V")
 
 # calculate density of inferred food web measures
 get_inf_measures <- function(P, N, min.scale = 0.5, trials = 500){
@@ -71,7 +75,7 @@ get_inf_measures <- function(P, N, min.scale = 0.5, trials = 500){
   P_scale <- P * N_scale
   for (i in 1:trials){
     b <- b_trial(P_scale)
-    result[[i]] <- round(Get.web.stats(b, which.stats = 2), 5)
+    result[[i]] <- round(Get.web.stats(b, which.stats = 1), 5)
   }
   result <- ldply(result)
   result
@@ -115,21 +119,26 @@ ggplot(inf_meas_50, aes(C)) +
            size = 1.5, colour = "black", arrow=arrow()) +
   ggtitle(label = "Connectance. N Rescaled from 0.5 to 1")
 
-ggplot(inf_meas_50, aes(Gensd)) +
-  geom_density() +
-  annotate("segment",
-           x = A_meas[4], xend = A_meas[4],
-           y = 500, yend = 0,
-           size = 1.5, colour = "black", arrow=arrow()) +
-  ggtitle(label = "Gen SD. N Rescaled to 0.5 to 1")
+inf_meas_50 <- inf_meas_50 %>%
+  # calculate normalized G and V
+  mutate(G = (L / (S* T+ S * I)) / S,
+         V = (L / (S * B + S * I)) / S)
 
-ggplot(inf_meas_50, aes(Vulsd)) +
+ggplot(inf_meas_50, aes(G)) +
   geom_density() +
   annotate("segment",
-           x = A_meas[5], xend = A_meas[5],
-           y = 500, yend = 0,
+           x = A_meas[10], xend = A_meas[10],
+           y = 25, yend = 0,
            size = 1.5, colour = "black", arrow=arrow()) +
-  ggtitle(label = "Vul SD. N Rescaled to 0.5 to 1")
+  ggtitle(label = "Normalized Generality. N Rescaled to 0.5 to 1")
+
+ggplot(inf_meas_50, aes(V)) +
+  geom_density() +
+  annotate("segment",
+           x = A_meas[11], xend = A_meas[11],
+           y = 25, yend = 0,
+           size = 1.5, colour = "black", arrow=arrow()) +
+  ggtitle(label = "Normalized Vulnerability. N Rescaled to 0.5 to 1")
 
 
 inf_meas_55 <- get_inf_measures(P = P, N = N, min.scale = 0.55)

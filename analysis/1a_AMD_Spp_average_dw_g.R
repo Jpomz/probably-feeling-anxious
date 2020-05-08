@@ -1,4 +1,7 @@
 # 1_AMD_Spp_average_dw_g
+# Feb 2018
+#J Pomz on GitHub
+# jfpomeranz@gmail.com
 
 library(plyr)
 library(tidyverse)
@@ -23,7 +26,7 @@ mean.k.mac <- fish %>%
   filter(site =="Kiwi", taxa =="Galaxias.maculatus") %>%
   summarize(dw = mean(dw))
 
-# make data frame of extra observations
+# make data frame of "extra" observations
 plus.fish <- data.frame(site = "Kiwi",
                        date_coll = "2.3.16",
                        taxa = c(rep("Anguilla.australis",2),
@@ -48,13 +51,14 @@ fish <- bind_rows(fish, plus.fish)
 bugs <- bugs %>%
   filter(site != "Burcoa")
 # add area column
-# one surber area = 0.24 * 0.25 = 0.06 m^2
+# one surber area = 0.24m * 0.25m = 0.06 m^2
 bugs$area <- 0.06
-# change Label to taxa for row binding below
+# change column name to "taxa" for row binding below
 bugs <- rename(bugs, taxa = Genus)
 # drop variables
 bugs <- bugs %>% select(taxa, site, surber, dw, area)
 
+# summarize bugs data, calculate density per m^2
 bugs <- bugs %>%
   group_by(site,  taxa) %>%
   summarize(avg.dw = mean(dw),
@@ -62,7 +66,7 @@ bugs <- bugs %>%
             area = mean(area),
             density = (count / 3) * 16.66667)
 
-
+# Same for fish data
 fish <- fish %>% 
   select(taxa, site, dw, area)
 fish <- fish %>%

@@ -1,3 +1,8 @@
+# food web functions modified from Owen Petchey
+# original functions were found at thetrophiclink.org
+# and are available on github here: https://github.com/opetchey/dumping_ground/blob/master/random_cascade_niche/FoodWebFunctions.r
+
+
 ## some code to plot a predation matrix
 ## some useful functions script has slightly different Plot.matrix code
 Plot.matrix <- function(web, title=" ", point.cex=0.5, trait.cex=1,
