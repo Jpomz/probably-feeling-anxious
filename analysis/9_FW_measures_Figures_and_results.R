@@ -22,12 +22,12 @@ dat <- dat %>%
 
 # Species ####
 S.brm <- readRDS("data/Bayesian_FW_S.RDS")
-(S.marg.eff <- plot_marg_eff_fw(model = S.brm,
+S.marg.eff <- plot_marg_eff_fw(model = S.brm,
                                raw_data = dat %>%
                                  distinct(S, pca1, Site),
                                raw_y = "S",
                                alpha.point = 0.99,
-                               title = "No. Species") )
+                               title = "No. Species")
 
 # check posterior predictive ability of model
 pp_check(S.brm, type="boxplot", notch = FALSE)
@@ -237,4 +237,55 @@ grid.arrange(S.marg.eff +
              ncol = 1)
 dev.off()
 
-
+# publication quality figure
+tiff(filename="data/figures/FW_figure.tiff",
+     height=5600,
+     width=5200,
+     units="px",
+     res=800,
+     compression="lzw")
+grid.arrange(S.marg.eff +
+               theme(legend.position = "none",
+                     axis.title.x=element_blank(),
+                     axis.text.x=element_blank())+
+               annotate(geom = "text",
+                        x = -3,
+                        y = 40,
+                        label = "A",
+                        size = 6),
+             L.marg.eff +
+               theme(legend.position = "none",
+                     axis.title.x=element_blank(),
+                     axis.text.x=element_blank())+
+               annotate(geom = "text",
+                        x = -3,
+                        y = 175,
+                        label = "B",
+                        size = 6),
+             C.marg.eff +
+               theme(legend.position = "none",
+                     axis.title.x=element_blank(),
+                     axis.text.x=element_blank())+
+               annotate(geom = "text",
+                        x = -3,
+                        y = 0.25,
+                        label = "C",
+                        size = 6),
+             Gen.marg.eff +
+               theme(legend.position = "none",
+                     axis.title.x=element_blank(),
+                     axis.text.x=element_blank())+
+               annotate(geom = "text",
+                        x = -3,
+                        y = 0.6,
+                        label = "D",
+                        size = 6),
+             Vul.marg.eff+
+               theme(legend.position = "none")+
+               annotate(geom = "text",
+                        x = -3,
+                        y = 0.6,
+                        label = "E",
+                        size = 6),
+             ncol = 1)
+dev.off()

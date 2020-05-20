@@ -197,4 +197,49 @@ grid.arrange(
   ncol = 2)
 dev.off()
 
+# publication quality figure
+tiff(filename="data/figures/Stab_figure.tiff",
+     height=5600,
+     width=5200,
+     units="px",
+     res=800,
+     compression="lzw")
+grid.arrange(
+  rand.marg.eff +
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.text.x = element_blank()) +
+    annotate(
+      geom = "text",
+      x = 5,
+      y = 0.23,
+      label = "A",
+      size = 6
+    ), 
+  scale.marg.eff +
+    theme(legend.position = "none",
+          axis.title.x = element_blank(),
+          axis.text.x = element_blank()) +
+    annotate(geom = "text",
+             x = 5,
+             y = 0.09,
+             label = "B",
+             size = 6),
+  corr.marg.eff +
+    theme(legend.position = "none")+
+    annotate(geom = "text",
+             x = 5,
+             y = 0.19,
+             label = "C",
+             size = 6),
+  s.c.marg.eff +
+    theme(legend.position = "none")+
+    annotate(geom = "text",
+             x = 5,
+             y = 0.13,
+             label = "D",
+             size = 6),
+  ncol = 2,
+  bottom = "Increasing AMD Stress L to R")
+dev.off()
 
