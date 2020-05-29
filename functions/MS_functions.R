@@ -167,6 +167,7 @@ rm_cycle <- function(A, diag = TRUE){
 #=======================================#
 # Marginal effects plot
 plot_marg_eff <- function(model, raw_data, title = NULL){
+  require(viridis)
   # marginal effects
   marg_eff <- marginal_effects(model, method = "fitted")
   # store as data frame
